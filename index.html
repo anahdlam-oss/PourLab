@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PourLab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const RECIPES = {
+  ultimate: {
+    id: "ultimate",
+    name: "HOFFMANN · THE ULTIMATE V60",
+    shortName: "The Ultimate V60",
+    color: "#5E2F1F",
+    ratioGPerL: 60,
+    defaultCoffee: 30,
+    phases: (coffeeG, ratioGPerL) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      const bloom = Math.round(coffeeG * 2);
+      const mid   = Math.round(total * 0.6);
+      return [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",       targetWater:bloom, note:`Vierte ${bloom} g y remueve hasta mojar todo el café` },
+        { id:"pour1",    start:45,  end:75,   label:"1er vertido", targetWater:mid,   note:`Sube a ${mid} g en 30 s` },
+        { id:"pour2",    start:75,  end:105,  label:"2do vertido", targetWater:total, note:`Sube a ${total} g en 30 s, más despacio` },
+        { id:"stir",     start:105, end:115,  label:"Remueve",     targetWater:total, note:"1x horario, 1x antihorario" },
+        { id:"swirl",    start:115, end:125,  label:"Swirl",       targetWater:total, note:"Gira suavemente la V60" },
+        { id:"drawdown", start:125, end:9999, label:"Drenado",     targetWater:total, note:"Presiona Finalizar cuando termine de drenar" },
+      ];
+    },
+  },
+  onecup: {
+    id: "onecup",
+    name: "HOFFMANN · 1 CUP V60 TECHNIQUE",
+    shortName: "1 Cup Technique",
+    color: "#A36A3D",
+    ratioGPerL: 60,
+    defaultCoffee: 15,
+    phases: (coffeeG, ratioGPerL) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      const g20 = Math.round(total * 0.2);
+      const g40 = Math.round(total * 0.4);
+      const g60 = Math.round(total * 0.6);
+      const g80 = Math.round(total * 0.8);
+      return [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",         targetWater:g20,  note:`Vierte ~${g20} g. A los 10-15 s, remueve suavemente` },
+        { id:"pour1",    start:45,  end:60,   label:"Vertido 1",     targetWater:g40,  note:`Sube a ~${g40} g` },
+        { id:"pause1",   start:60,  end:70,   label:"Pausa",         targetWater:g40,  note:"Deja reposar, sin verter" },
+        { id:"pour2",    start:70,  end:80,   label:"Vertido 2",     targetWater:g60,  note:`Sube a ~${g60} g` },
+        { id:"pause2",   start:80,  end:90,   label:"Pausa",         targetWater:g60,  note:"Deja reposar, sin verter" },
+        { id:"pour3",    start:90,  end:100,  label:"Vertido 3",     targetWater:g80,  note:`Sube a ~${g80} g` },
+        { id:"pause3",   start:100, end:110,  label:"Pausa",         targetWater:g80,  note:"Deja reposar, sin verter" },
+        { id:"pour4",    start:110, end:120,  label:"Vertido final", targetWater:total,note:`Sube a ~${total} g, vertido final` },
+        { id:"swirl",    start:120, end:130,  label:"Swirl",         targetWater:total,note:"Gira suavemente la V60" },
+        { id:"drawdown", start:130, end:9999, label:"Drenado",       targetWater:total,note:"Presiona Finalizar cuando termine de drenar" },
+      ];
+    },
+  },
+};
+
+const CATEGORIES = [
+  { id:"v60",    label:"V60",             recipes:["ultimate","onecup"] },
+  { id:"chemex", label:"CHEMEX",          recipes:[] },
+  { id:"prensa", label:"PRENSA FRANCESA", recipes:[] },
+  { id:"moka",   label:"MOKA ITALIANA",   recipes:[] },
+];
+
+const CUSTOM_COLOR = "#8B5A35";
+const TOOL_COLOR = "#623520";
+
+function fmtTime(s) {
+  const m = Math.floor(Math.max(0,s)/60);
+  const sec = Math.floor(Math.max(0,s)%60);
+  return `${m}:${sec.toString().padStart(2,"0")}`;
+}
+
+function getPhase(phases, t) {
+  return phases.find(p => t >= p.start && t < p.end) || phases[phases.length-1];
+}
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace("#","");
+  const r = parseInt(h.substring(0,2),16);
+  const g = parseInt(h.substring(2,4),16);
+  const b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function PourLab() {
+  const [screen, setScreen]         = useState("menu");
+  const [recipeId, setRecipeId]     = useState("ultimate");
+  const [customRecipeObj, setCustomRecipeObj] = useState(null);
+  const recipe = recipeId === "custom" ? customRecipeObj : RECIPES[recipeId];
+
+  const [inputVal, setInputVal]     = useState(String(RECIPES.ultimate.defaultCoffee));
+  const [inputMode, setInputMode]   = useState("coffee");
+  const [coffeeG, setCoffeeG]       = useState(RECIPES.ultimate.defaultCoffee);
+  const [coffeeName, setCoffeeName] = useState("");
+  const [grind, setGrind]           = useState("");
+  const [running, setRunning]       = useState(false);
+  const [elapsed, setElapsed]       = useState(0);
+  const [started, setStarted]       = useState(false);
+  const [isDone, setIsDone]         = useState(false);
+  const [runPhases, setRunPhases]   = useState([]);
+  const rafRef     = useRef(null);
+  const startRef   = useRef(null);
+  const offsetRef  = useRef(0);
+
+  const [customBrewer, setCustomBrewer]         = useState("");
+  const [customWaterG, setCustomWaterG]         = useState(500);
+  const [customMode, setCustomMode]             = useState("phases");
+  const [customPhaseDrafts, setCustomPhaseDrafts] = useState([
+    { id:"p0", label:"Bloom", duration:"45", water:"60" },
+  ]);
+
+  const [calcRatio, setCalcRatio]   = useState(15);
+  const [calcCoffee, setCalcCoffee] = useState("20");
+  const [calcWater, setCalcWater]   = useState("300");
+
+  const totalWater = recipe ? Math.round(coffeeG * (1000 / recipe.ratioGPerL)) : 0;
+  const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10) / 10}` : "--";
+
+  function openRecipe(id) {
+    const r = RECIPES[id];
+    setRecipeId(id);
+    setCoffeeG(r.defaultCoffee);
+    setInputMode("coffee");
+    setInputVal(String(r.defaultCoffee));
+    setCoffeeName("");
+    setGrind("");
+    setRunPhases(r.phases(r.defaultCoffee, r.ratioGPerL));
+    setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
+    setScreen("app");
+  }
+
+  function openCustomSetup() {
+    setCustomBrewer("");
+    setCoffeeName("");
+    setGrind("");
+    setCoffeeG(30);
+    setCustomWaterG(500);
+    setCustomMode("phases");
+    setCustomPhaseDrafts([{ id:"p0", label:"Bloom", duration:"45", water:"60" }]);
+    setScreen("custom-setup");
+  }
+
+  function openRatioCalc() {
+    setCalcRatio(15);
+    setCalcCoffee("20");
+    setCalcWater("300");
+    setScreen("ratio-calc");
+  }
+
+  function handleCalcCoffeeChange(val) {
+    setCalcCoffee(val);
+    const n = parseFloat(val);
+    if (!isNaN(n)) setCalcWater(String(Math.round(n * calcRatio)));
+  }
+
+  function handleCalcWaterChange(val) {
+    setCalcWater(val);
+    const n = parseFloat(val);
+    if (!isNaN(n)) setCalcCoffee(String(Math.round((n / calcRatio) * 10) / 10));
+  }
+
+  function handleCalcRatioChange(newRatio) {
+    setCalcRatio(newRatio);
+    const n = parseFloat(calcCoffee);
+    if (!isNaN(n)) setCalcWater(String(Math.round(n * newRatio)));
+  }
+
+  function addPhaseDraft() {
+    setCustomPhaseDrafts(prev => [...prev, {
+      id:`p${prev.length}-${Date.now()}`,
+      label:`Fase ${prev.length+1}`,
+      duration:"30",
+      water:String(Math.round(customWaterG / 5)),
+    }]);
+  }
+
+  function removePhaseDraft(id) {
+    setCustomPhaseDrafts(prev => prev.length > 1 ? prev.filter(d => d.id !== id) : prev);
+  }
+
+  function updatePhaseDraft(id, field, value) {
+    setCustomPhaseDrafts(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d));
+  }
+
+  function startCustomRecipe() {
+    const water = parseFloat(customWaterG) || 500;
+    const coffee = parseFloat(coffeeG) || 30;
+
+    if (customMode === "phases") {
+      const totalAssigned = customPhaseDrafts.reduce((acc,d) => acc + (parseFloat(d.water)||0), 0);
+      if (totalAssigned !== water) return;
+    }
+
+    let finalPhases;
+
+    if (customMode === "free") {
+      finalPhases = [
+        { id:"free", start:0, end:9999, label:"Extracción libre", targetWater:Math.round(water), note:"Sin fases definidas · sigue tu propio ritmo" },
+      ];
+    } else {
+      let start = 0;
+      let cumulative = 0;
+      finalPhases = customPhaseDrafts.map((d,i) => {
+        const dur = Math.max(1, parseInt(d.duration,10) || 30);
+        const w   = Math.max(0, parseInt(d.water,10) || 0);
+        cumulative += w;
+        const ph  = { id:`c${i}`, start, end:start+dur, label:d.label || `Fase ${i+1}`, targetWater:cumulative, note:"" };
+        start += dur;
+        return ph;
+      });
+      finalPhases.push({ id:"drawdown", start, end:9999, label:"Drenado", targetWater:Math.round(water), note:"Presiona Finalizar cuando termine de drenar" });
+    }
+
+    const ratioGPerL  = coffee > 0 ? (coffee * 1000) / water : 60;
+    const brewerLabel = customBrewer.trim() ? customBrewer.trim().toUpperCase() : "PERSONALIZADA";
+
+    setCustomRecipeObj({
+      id:"custom",
+      name:`MI RECETA · ${brewerLabel}`,
+      shortName:"Mi receta",
+      color:CUSTOM_COLOR,
+      ratioGPerL,
+      defaultCoffee:coffee,
+      phases: () => finalPhases,
+    });
+    setRecipeId("custom");
+    setCoffeeG(coffee);
+    setRunPhases(finalPhases);
+    setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
+    setScreen("app");
+  }
+
+  function handleInput(val) {
+    setInputVal(val);
+    const n = parseFloat(val);
+    if (!isNaN(n) && n > 0) {
+      if (inputMode === "coffee") setCoffeeG(n);
+      else setCoffeeG(Math.round((n / (1000 / recipe.ratioGPerL)) * 10) / 10);
+    }
+  }
+
+  function toggleMode(mode) {
+    setInputMode(mode);
+    setInputVal(mode === "coffee" ? String(coffeeG) : String(totalWater));
+  }
+
+  useEffect(() => {
+    if (!running) return;
+    const tick = (now) => {
+      if (startRef.current === null) startRef.current = now;
+      const secs = offsetRef.current + (now - startRef.current) / 1000;
+      setElapsed(secs);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [running]);
+
+  useEffect(() => {
+    if (screen === "app" && recipeId !== "custom" && !started && recipe) {
+      setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL));
+    }
+  }, [coffeeG, recipeId, started, screen]);
+
+  const handleStartPause = useCallback(() => {
+    if (running) {
+      offsetRef.current = elapsed;
+      startRef.current  = null;
+      setRunning(false);
+    } else {
+      if (!started) setStarted(true);
+      startRef.current = null;
+      setRunning(true);
+    }
+  }, [running, elapsed, started]);
+
+  const handleFinish = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    setRunning(false);
+    setIsDone(true);
+  }, []);
+
+  const handleNextPhase = useCallback(() => {
+    setRunPhases(prev => {
+      const cur = getPhase(prev, elapsed);
+      const idx = prev.indexOf(cur);
+      const next = prev[idx + 1];
+      if (!next) return prev;
+      const delta = elapsed - next.start;
+      return prev.map((p, i) => {
+        if (i === idx) return { ...p, end: elapsed };
+        if (i > idx) return { ...p, start: p.start + delta, end: p.end < 9999 ? p.end + delta : p.end };
+        return p;
+      });
+    });
+  }, [elapsed]);
+
+  const handleReset = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    setRunning(false); setElapsed(0); setStarted(false); setIsDone(false);
+    offsetRef.current = 0; startRef.current = null;
+    if (recipe) setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL));
+  }, [recipe, coffeeG]);
+
+  function backToMenu() {
+    handleReset();
+    setScreen("menu");
+  }
+
+  if (screen === "menu") {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <div style={s.appName}>☕ PourLab</div>
+          <div style={s.menuTitle}>BREWING TECHNIQUES</div>
+
+          <div style={s.categoryBlock}>
+            <div style={s.categoryLabel}>MI PROPIA RECETA</div>
+            <button style={{...s.recipeItemBtn, background:CUSTOM_COLOR}} onClick={openCustomSetup}>
+              <span>Crear receta personalizada</span>
+              <span style={s.chevron}>›</span>
+            </button>
+          </div>
+
+          {CATEGORIES.map(cat => (
+            <div key={cat.id} style={s.categoryBlock}>
+              <div style={s.categoryLabel}>{cat.label}</div>
+              {cat.recipes.length > 0 ? (
+                cat.recipes.map(rid => (
+                  <button
+                    key={rid}
+                    style={{...s.recipeItemBtn, background:RECIPES[rid].color}}
+                    onClick={()=>openRecipe(rid)}
+                  >
+                    <span>{RECIPES[rid].name}</span>
+                    <span style={s.chevron}>›</span>
+                  </button>
+                ))
+              ) : (
+                <div style={s.comingSoon}>en desarrollo</div>
+              )}
+            </div>
+          ))}
+
+          <div style={s.categoryBlock}>
+            <div style={s.categoryLabel}>HERRAMIENTAS</div>
+            <button style={{...s.recipeItemBtn, background:TOOL_COLOR}} onClick={openRatioCalc}>
+              <span>Calculadora de ratio</span>
+              <span style={s.chevron}>›</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "custom-setup") {
+    const totalAssigned = customPhaseDrafts.reduce((acc,d) => acc + (parseFloat(d.water)||0), 0);
+    const overTotal = totalAssigned > customWaterG;
+    const underTotal = totalAssigned < customWaterG;
+    const canStart = customMode === "free" || totalAssigned === customWaterG;
+    let runningSum = 0;
+
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <div style={s.topBar}>
+            <button style={{...s.backBtn, color:CUSTOM_COLOR}} onClick={()=>setScreen("menu")}>‹ Recetas</button>
+          </div>
+          <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>MI PROPIA RECETA</div>
+
+          <div style={s.setup}>
+            <input type="text" placeholder="Cafetera (ej. V60, Prensa Francesa, Melitta...)" value={customBrewer} onChange={e=>setCustomBrewer(e.target.value)} style={{...s.input, fontSize:14}} />
+            <input type="text" placeholder="Nombre del café (ej. Huila Natural)" value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+            <input type="text" placeholder="Molienda (ej. K6 · click 40)" value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+
+            <div style={s.customGrid}>
+              <div>
+                <div style={s.smallLabel}>Café (g)</div>
+                <input type="number" value={coffeeG} onChange={e=>setCoffeeG(parseFloat(e.target.value)||0)} style={s.inputSmall} min="1" />
+              </div>
+              <div>
+                <div style={s.smallLabel}>Agua (ml)</div>
+                <input type="number" value={customWaterG} onChange={e=>setCustomWaterG(parseFloat(e.target.value)||0)} style={s.inputSmall} min="1" />
+              </div>
+            </div>
+            <div style={s.inputHint}>ratio {coffeeG > 0 ? `1:${Math.floor((customWaterG / coffeeG) * 10) / 10}` : "--"}</div>
+
+            <div style={{...s.modeRow, marginTop:16}}>
+              <button style={{...s.modeBtn, ...(customMode==="phases"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("phases")}>Con fases</button>
+              <button style={{...s.modeBtn, ...(customMode==="free"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("free")}>Sin fases</button>
+            </div>
+
+            {customMode === "phases" && (
+              <div style={s.phasesBuilder}>
+                <div style={{...s.phaseGoalNote, color: overTotal ? "#c0392b" : "#8a7660", fontWeight: overTotal ? 700 : 400}}>
+                  {overTotal ? "⚠ " : ""}meta: {customWaterG} g · llevas vertidos: {totalAssigned} g
+                </div>
+                <div style={s.phaseDraftHeader}>
+                  <span style={s.phaseDraftInputWide}>Fase</span>
+                  <span style={s.phaseHeaderIconBox}>⏳</span>
+                  <span style={s.phaseHeaderIconBox}>💧</span>
+                  <span style={{width:22}} />
+                </div>
+                {customPhaseDrafts.map(d => {
+                  const wVal = parseFloat(d.water) || 0;
+                  runningSum += wVal;
+                  const overLimit = runningSum > customWaterG;
+                  return (
+                    <div key={d.id} style={s.phaseDraftRow}>
+                      <input type="text" value={d.label} onChange={e=>updatePhaseDraft(d.id,"label",e.target.value)} placeholder="Fase" style={s.phaseDraftInputWide} />
+                      <div style={s.phaseDraftInputWrapSmall}>
+                        <input type="number" value={d.duration} onChange={e=>updatePhaseDraft(d.id,"duration",e.target.value)} placeholder="45" style={s.phaseDraftInputSmall} />
+                        <span style={s.unitSuffix}>s</span>
+                      </div>
+                      <div style={s.phaseDraftInputWrapSmall}>
+                        <input
+                          type="number"
+                          value={d.water}
+                          onChange={e=>updatePhaseDraft(d.id,"water",e.target.value)}
+                          placeholder="60"
+                          style={{...s.phaseDraftInputSmall, ...(overLimit ? s.phaseDraftInputWarn : {})}}
+                        />
+                        <span style={s.unitSuffix}>g</span>
+                      </div>
+                      <button style={{...s.removePhaseBtn, opacity: customPhaseDrafts.length>1?1:0.3}} onClick={()=>removePhaseDraft(d.id)}>✕</button>
+                    </div>
+                  );
+                })}
+                <button style={{...s.addPhaseBtn, color:CUSTOM_COLOR, borderColor:CUSTOM_COLOR}} onClick={addPhaseDraft}>+ Añadir fase</button>
+                {underTotal && (
+                  <div style={s.phaseUnderNote}>Te faltan {customWaterG - totalAssigned} g para llegar a la meta de {customWaterG} g</div>
+                )}
+              </div>
+            )}
+
+            {customMode === "free" && (
+              <div style={s.freeNote}>El temporizador correrá libremente. Presiona Finalizar cuando termine tu extracción.</div>
+            )}
+
+            <button
+              style={{...s.startBtn, width:"100%", marginTop:18, background: canStart ? CUSTOM_COLOR : "#d8cdbf", boxShadow: canStart ? `0 8px 20px ${hexToRgba(CUSTOM_COLOR,0.35)}` : "none", cursor: canStart ? "pointer" : "not-allowed"}}
+              onClick={startCustomRecipe}
+              disabled={!canStart}
+            >
+              {canStart ? "Comenzar receta" : "Asigna toda el agua para comenzar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "ratio-calc") {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <div style={s.topBar}>
+            <button style={{...s.backBtn, color:TOOL_COLOR}} onClick={()=>setScreen("menu")}>‹ Recetas</button>
+          </div>
+          <div style={{...s.eyebrow, color:TOOL_COLOR}}>CALCULADORA DE RATIO</div>
+
+          <div style={s.setup}>
+            <div style={s.ratioBigLabel}>1:{calcRatio}</div>
+            <input
+              type="range"
+              min="2"
+              max="20"
+              step="1"
+              value={calcRatio}
+              onChange={e=>handleCalcRatioChange(parseInt(e.target.value,10))}
+              style={{...s.ratioSlider, accentColor:TOOL_COLOR}}
+            />
+            <div style={s.ratioSliderLabels}>
+              <span>1:2</span>
+              <span>1:20</span>
+            </div>
+
+            <div style={s.customGrid}>
+              <div>
+                <div style={s.smallLabel}>Café (g)</div>
+                <input type="number" value={calcCoffee} onChange={e=>handleCalcCoffeeChange(e.target.value)} style={s.inputSmall} min="0" />
+              </div>
+              <div>
+                <div style={s.smallLabel}>Agua (ml)</div>
+                <input type="number" value={calcWater} onChange={e=>handleCalcWaterChange(e.target.value)} style={s.inputSmall} min="0" />
+              </div>
+            </div>
+            <div style={s.inputHint}>Cambia cualquiera de los dos y el otro se ajusta solo, según el ratio elegido.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!recipe) return null;
+
+  const phase        = getPhase(runPhases, elapsed);
+  const phaseIdx     = runPhases.indexOf(phase);
+  const phaseElapsed = Math.max(0, elapsed - (phase.start || 0));
+  const phaseDur     = (phase.end < 9999 ? phase.end : phase.start + 85) - phase.start;
+  const phaseRem     = Math.max(0, phaseDur - phaseElapsed);
+  const phaseProgress= Math.min(1, phaseElapsed / phaseDur);
+  const isPour       = phase.id === "bloom" || phase.id.startsWith("pour");
+  const isDrawdown   = phase.id === "drawdown" || phase.id === "free";
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
+
+  const summaryPhases = [
+    ...runPhases.filter(p => p.id !== "drawdown" && p.id !== "free").map(p => ({
+      t: fmtTime(p.start),
+      label: p.label,
+      detalle: `${p.targetWater} g`,
+    })),
+    { t:"fin", label:"Drenado completo", detalle: fmtTime(elapsed) },
+  ];
+
+  return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.topBar}>
+          <button style={{...s.backBtn, color:recipe.color}} onClick={backToMenu}>‹ Recetas</button>
+        </div>
+        <div style={{...s.eyebrow, color:recipe.color}}>{recipe.name}</div>
+
+        {!started && recipeId !== "custom" && (
+          <div style={s.setup}>
+            <div style={s.modeRow}>
+              <button style={{...s.modeBtn,...(inputMode==="coffee"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("coffee")}>Café (g)</button>
+              <button style={{...s.modeBtn,...(inputMode==="water"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("water")}>Agua (ml)</button>
+            </div>
+            <input type="number" value={inputVal} onChange={e=>handleInput(e.target.value)} style={s.input} min="1" />
+            <div style={s.inputHint}>→ {coffeeG} g café · {totalWater} ml agua · ratio {ratioLabel}</div>
+            <input type="text" placeholder="Nombre del café (ej. Huila Natural)" value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:10}} />
+            <input type="text" placeholder="Molienda (ej. K6 · click 40)" value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+          </div>
+        )}
+
+        {!started && recipeId === "custom" && (
+          <div style={s.setup}>
+            <div style={s.summaryHero}>
+              {customBrewer && <div style={s.summaryGrind}>{customBrewer}</div>}
+              {coffeeName && <div style={s.summaryName}>{coffeeName}</div>}
+              {grind && <div style={s.summaryGrind}>{grind}</div>}
+            </div>
+            <div style={s.inputHint}>{coffeeG} g café · {totalWater} ml agua · ratio {ratioLabel}</div>
+          </div>
+        )}
+
+        {started && !isDone && (
+          <div style={s.subEyebrow}>
+            {recipeId==="custom" && customBrewer && <strong>{customBrewer} · </strong>}
+            {coffeeName && <strong>{coffeeName} · </strong>}
+            {coffeeG} g · {totalWater} ml · {ratioLabel}{grind ? ` · ${grind}` : ""}
+          </div>
+        )}
+
+        {!isDone && (
+          <>
+            <div style={s.waterBlock}>
+              <div style={s.waterNumber}>{phase.targetWater}<span style={{...s.waterUnit, color:recipe.color}}>g</span></div>
+              <div style={s.waterCaption}>{isPour ? "llega hasta aquí" : "agua en la jarra"}</div>
+            </div>
+
+            <div style={s.timerBlock}>
+              <div style={{...s.timerNumber, color:recipe.color}}>{isDrawdown ? fmtTime(elapsed) : fmtTime(phaseRem)}</div>
+              <div style={s.timerCaption}>{isDrawdown ? "tiempo total · presiona finalizar cuando termines" : "tiempo restante de esta fase"}</div>
+            </div>
+
+            <div style={s.phaseRow}>
+              <div style={s.phaseLabel}>{phase.label}</div>
+              <div style={s.phaseTime}>t {fmtTime(elapsed)}</div>
+            </div>
+            <div style={s.note}>{phase.note}</div>
+
+            <div style={s.progressTrack}>
+              <div style={{...s.progressFill, width:`${phaseProgress*100}%`, background:recipe.color}} />
+            </div>
+            <div style={s.timeline}>
+              {runPhases.map((p,i)=>(
+                <div key={p.id} style={{...s.timelineSeg,
+                  flexGrow: (p.id==="drawdown"||p.id==="free") ? 85 : p.end-p.start,
+                  background: i<phaseIdx?recipe.color:i===phaseIdx?hexToRgba(recipe.color,0.5):"#e8ddd0"}} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {isDone && (
+          <div style={s.summary}>
+            <div style={s.summaryTitle}>☕ Extracción completada</div>
+            <div style={s.summaryDate}>{dateStr}</div>
+
+            {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
+              <div style={s.summaryHero}>
+                {recipeId==="custom" && customBrewer && <div style={s.summaryGrind}>{customBrewer}</div>}
+                {coffeeName && <div style={s.summaryName}>{coffeeName}</div>}
+                {grind && <div style={s.summaryGrind}>{grind}</div>}
+              </div>
+            )}
+
+            <div style={s.metricsGrid}>
+              {[
+                { label:"Café",   value:`${coffeeG} g` },
+                { label:"Agua",   value:`${totalWater} ml` },
+                { label:"Tiempo", value:fmtTime(elapsed) },
+                { label:"Ratio",  value:ratioLabel },
+              ].map(m => (
+                <div key={m.label} style={s.metricBox}>
+                  <div style={{...s.metricValue, color:recipe.color}}>{m.value}</div>
+                  <div style={s.metricLabel}>{m.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={s.divider} />
+
+            <div style={{...s.fasesTitle, color:recipe.color}}>FASES · {recipe.shortName}</div>
+            {summaryPhases.map((f,i) => (
+              <div key={`${f.t}-${i}`} style={s.faseRow}>
+                <span style={{...s.faseT, color:recipe.color}}>{f.t}</span>
+                <span style={s.faseLabel}>{f.label}</span>
+                <span style={s.faseDetalle}>{f.detalle}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={s.controls}>
+          {!isDone && (
+            <button style={s.resetBtn} onClick={handleReset}>
+              Reiniciar
+            </button>
+          )}
+          {!isDone && !isDrawdown && (
+            <>
+              <button style={{...s.startBtn, background:recipe.color, boxShadow:`0 8px 20px ${hexToRgba(recipe.color,0.35)}`}} onClick={handleStartPause}>
+                {running ? "Pausar" : elapsed > 0 ? "Reanudar" : "Empezar"}
+              </button>
+              {started && (
+                <button style={{...s.nextBtn, color:recipe.color, borderColor:recipe.color}} onClick={handleNextPhase}>
+                  Siguiente ›
+                </button>
+              )}
+            </>
+          )}
+          {!isDone && isDrawdown && (
+            <>
+              <button style={{...s.startBtn, background:"#8a7660", boxShadow:"none", flex:"0 0 100px"}} onClick={handleStartPause}>
+                {running ? "Pausar" : elapsed > 0 ? "Reanudar" : "Empezar"}
+              </button>
+              <button style={{...s.startBtn, background:recipe.color, boxShadow:`0 8px 20px ${hexToRgba(recipe.color,0.35)}`, flex:1}} onClick={handleFinish}>
+                Finalizar
+              </button>
+            </>
+          )}
+        </div>
+
+        {!isDone && <div style={s.totalTime}>t = {fmtTime(elapsed)}</div>}
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  page:         { minHeight:"100vh", background:"linear-gradient(180deg,#faf6f0,#f0e6d8)", display:"flex", alignItems:"center", justifyContent:"center", padding:24, fontFamily:"'Iowan Old Style','Palatino Linotype',Georgia,serif", boxSizing:"border-box" },
+  card:         { width:"100%", maxWidth:420, background:"#fffdfa", borderRadius:24, padding:"32px 28px 24px", boxShadow:"0 20px 50px rgba(80,50,20,.12),0 2px 8px rgba(80,50,20,.08)", border:"1px solid #ecdfc9" },
+  eyebrow:      { fontSize:12, letterSpacing:"0.14em", fontWeight:700, color:"#b5651d", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  subEyebrow:   { fontSize:12, color:"#8a7660", textAlign:"center", marginTop:4, marginBottom:10, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  setup:        { marginTop:14, marginBottom:4 },
+  topBar:       { display:"flex", justifyContent:"flex-start", marginBottom:6 },
+  backBtn:      { border:"none", background:"none", color:"#b5651d", fontWeight:700, fontSize:13, cursor:"pointer", padding:0, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  menuTitle:    { fontSize:13, letterSpacing:"0.14em", fontWeight:700, color:"#b5651d", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:22 },
+  appName:      { fontSize:22, fontWeight:700, color:"#3d2b1f", textAlign:"center", marginBottom:6, fontFamily:"'Iowan Old Style','Palatino Linotype',Georgia,serif" },
+  categoryBlock:{ marginBottom:22 },
+  categoryLabel:{ fontSize:11, fontWeight:700, color:"#8a7660", letterSpacing:"0.12em", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:8, borderBottom:"1px solid #ecdfc9", paddingBottom:6 },
+  recipeItemBtn:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", border:"none", borderRadius:10, marginBottom:7, color:"#fffdfa", fontWeight:400, fontSize:11.5, letterSpacing:"0.01em", cursor:"pointer", textAlign:"left", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  chevron:      { color:"rgba(255,255,255,0.55)", fontSize:14, fontWeight:400 },
+  comingSoon:   { padding:"10px 4px", color:"#c7bba8", fontSize:13, fontStyle:"italic", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  modeRow:      { display:"flex", gap:8, marginBottom:10 },
+  modeBtn:      { flex:1, padding:"8px 0", borderRadius:10, border:"1px solid #ecdfc9", background:"#fff", color:"#8a6a4f", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  input:        { width:"100%", padding:"10px 14px", borderRadius:12, border:"1.5px solid #ecdfc9", fontSize:24, fontWeight:700, color:"#3d2b1f", textAlign:"center", outline:"none", boxSizing:"border-box", background:"#fffaf5", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  inputHint:    { textAlign:"center", fontSize:12, color:"#8a7660", marginTop:6, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  ratioBigLabel:{ textAlign:"center", fontSize:44, fontWeight:700, color:"#3d2b1f", marginBottom:10, fontVariantNumeric:"tabular-nums" },
+  ratioSlider:  { width:"100%", marginTop:4 },
+  ratioSliderLabels:{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#8a7660", marginTop:4, marginBottom:18, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  customGrid:   { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 },
+  smallLabel:   { fontSize:11, color:"#8a7660", marginBottom:4, fontFamily:"'Helvetica Neue',Arial,sans-serif", textTransform:"uppercase", letterSpacing:"0.05em" },
+  inputSmall:   { width:"100%", padding:"9px 10px", borderRadius:10, border:"1.5px solid #ecdfc9", fontSize:16, fontWeight:700, color:"#3d2b1f", textAlign:"center", outline:"none", boxSizing:"border-box", background:"#fffaf5", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  phasesBuilder:{ marginTop:14 },
+  phaseGoalNote:{ fontSize:11, fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:8 },
+  phaseDraftHeader:{ display:"flex", gap:6, alignItems:"stretch", marginBottom:6, paddingLeft:2 },
+  phaseHeaderIconBox:{ width:72, height:36, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:8, border:"1px solid #ecdfc9", background:"#fffaf5", fontSize:16, boxSizing:"border-box" },
+  phaseDraftRow:{ display:"flex", gap:6, alignItems:"center", marginBottom:6 },
+  phaseDraftInputWide:{ flex:1, minWidth:0, height:36, lineHeight:"36px", padding:"0 8px", borderRadius:8, border:"1px solid #ecdfc9", fontSize:12.5, color:"#3d2b1f", background:"#fffaf5", fontFamily:"'Helvetica Neue',Arial,sans-serif", boxSizing:"border-box" },
+  phaseDraftInputWrapSmall:{ position:"relative", width:72 },
+  phaseDraftInputSmall:{ width:"100%", height:36, lineHeight:"36px", padding:"0 24px 0 8px", borderRadius:8, border:"1px solid #ecdfc9", fontSize:12.5, color:"#3d2b1f", textAlign:"center", background:"#fffaf5", fontFamily:"'Helvetica Neue',Arial,sans-serif", boxSizing:"border-box" },
+  unitSuffix:   { position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", fontSize:10, color:"#a08b74", pointerEvents:"none", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  phaseDraftInputWarn:{ border:"1.5px solid #c0392b", background:"#fdecea", color:"#c0392b", fontWeight:700 },
+  removePhaseBtn:{ border:"none", background:"none", color:"#b5651d", fontSize:14, cursor:"pointer", width:22, flexShrink:0 },
+  addPhaseBtn:  { width:"100%", marginTop:4, padding:"9px 0", borderRadius:10, border:"1.5px dashed #b5651d", background:"none", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  phaseUnderNote:{ marginTop:8, fontSize:12, color:"#8a7660", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  freeNote:     { marginTop:12, fontSize:12.5, color:"#8a7660", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif", lineHeight:1.5 },
+  waterBlock:   { textAlign:"center", padding:"14px 0 8px" },
+  waterNumber:  { fontSize:88, fontWeight:700, color:"#3d2b1f", lineHeight:1, fontVariantNumeric:"tabular-nums" },
+  waterUnit:    { fontSize:30, fontWeight:600, marginLeft:6 },
+  waterCaption: { fontSize:13, color:"#8a7660", marginTop:6, fontFamily:"'Helvetica Neue',Arial,sans-serif", textTransform:"uppercase", letterSpacing:"0.06em" },
+  timerBlock:   { textAlign:"center", padding:"4px 0 6px", borderTop:"1px dashed #ecdfc9", marginTop:4 },
+  timerNumber:  { fontSize:42, fontWeight:700, lineHeight:1.2, fontVariantNumeric:"tabular-nums", marginTop:8 },
+  timerCaption: { fontSize:12, color:"#8a7660", fontFamily:"'Helvetica Neue',Arial,sans-serif", textTransform:"uppercase", letterSpacing:"0.06em" },
+  phaseRow:     { display:"flex", justifyContent:"space-between", alignItems:"baseline", marginTop:20, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  phaseLabel:   { fontSize:19, fontWeight:700, color:"#3d2b1f" },
+  phaseTime:    { fontSize:15, color:"#8a7660", fontVariantNumeric:"tabular-nums" },
+  note:         { fontSize:13, color:"#8a7660", marginTop:4, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  progressTrack:{ marginTop:14, height:6, borderRadius:4, background:"#ecdfc9", overflow:"hidden" },
+  progressFill: { height:"100%", borderRadius:4, transition:"width 0.1s linear" },
+  timeline:     { display:"flex", gap:3, marginTop:16, height:8 },
+  timelineSeg:  { borderRadius:3, transition:"background 0.3s ease" },
+  summary:      { marginTop:14 },
+  summaryTitle: { fontSize:20, fontWeight:700, color:"#3d2b1f", textAlign:"center" },
+  summaryDate:  { fontSize:12, color:"#b5a48c", textAlign:"center", marginTop:4, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  summaryHero:  { marginTop:14, padding:"14px 16px", background:"#fdf5ec", borderRadius:14, border:"1px solid #ecdfc9", textAlign:"center" },
+  summaryName:  { fontSize:18, fontWeight:700, color:"#3d2b1f" },
+  summaryGrind: { fontSize:13, color:"#8a7660", marginTop:4, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  metricsGrid:  { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:14 },
+  metricBox:    { background:"#fdf5ec", borderRadius:12, padding:"14px 10px", textAlign:"center", border:"1px solid #ecdfc9" },
+  metricValue:  { fontSize:24, fontWeight:700, fontVariantNumeric:"tabular-nums" },
+  metricLabel:  { fontSize:11, color:"#8a7660", marginTop:4, fontFamily:"'Helvetica Neue',Arial,sans-serif", textTransform:"uppercase", letterSpacing:"0.06em" },
+  divider:      { height:1, background:"#ecdfc9", margin:"16px 0" },
+  fasesTitle:   { fontSize:11, fontWeight:700, letterSpacing:"0.1em", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:8 },
+  faseRow:      { display:"flex", alignItems:"baseline", gap:8, padding:"5px 0", borderBottom:"1px solid #f5ede0", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  faseT:        { fontSize:12, fontWeight:700, minWidth:32 },
+  faseLabel:    { fontSize:13, color:"#3d2b1f", flex:1 },
+  faseDetalle:  { fontSize:13, color:"#8a7660" },
+  controls:     { display:"flex", gap:8, marginTop:20 },
+  resetBtn:     { flex:"0 0 110px", padding:"14px 0", borderRadius:14, border:"1px solid #ecdfc9", background:"#fff", color:"#8a6a4f", fontWeight:600, fontSize:14, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  nextBtn:      { flex:"0 0 92px", padding:"14px 0", borderRadius:14, border:"1.5px solid", background:"#fff", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  startBtn:     { flex:1, padding:"14px 0", borderRadius:14, border:"none", color:"#fffdfa", fontWeight:700, fontSize:15, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  totalTime:    { textAlign:"center", marginTop:14, fontSize:12, color:"#b5a48c", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<PourLab />);
+</script>
+</body>
+</html>
