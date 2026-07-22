@@ -21,16 +21,23 @@ const { useState, useEffect, useRef, useCallback } = React;
 const RECIPES = {
   ultimate: {
     id: "ultimate",
-    name: "HOFFMANN · THE ULTIMATE V60",
-    shortName: "The Ultimate V60",
+    name: { es:"Hoffmann · El V60 definitivo", en:"Hoffmann · The Ultimate V60" },
+    shortName: { es:"El V60 definitivo", en:"The Ultimate V60" },
     color: "#5E2F1F",
     ratioGPerL: 60,
     defaultCoffee: 30,
-    phases: (coffeeG, ratioGPerL) => {
+    phases: (coffeeG, ratioGPerL, lang) => {
       const total = Math.round(coffeeG * (1000 / ratioGPerL));
       const bloom = Math.round(coffeeG * 2);
       const mid   = Math.round(total * 0.6);
-      return [
+      return lang === "en" ? [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",       targetWater:bloom, note:`Pour ${bloom} g and stir until all the coffee is wet` },
+        { id:"pour1",    start:45,  end:75,   label:"1st pour",    targetWater:mid,   note:`Rise to ${mid} g over 30 s` },
+        { id:"pour2",    start:75,  end:105,  label:"2nd pour",    targetWater:total, note:`Rise to ${total} g over 30 s, more slowly` },
+        { id:"stir",     start:105, end:115,  label:"Stir",        targetWater:total, note:"1x clockwise, 1x counter-clockwise" },
+        { id:"swirl",    start:115, end:125,  label:"Swirl",       targetWater:total, note:"Gently swirl the V60" },
+        { id:"drawdown", start:125, end:9999, label:"Drawdown",    targetWater:total, note:"Press Finish once it's done draining" },
+      ] : [
         { id:"bloom",    start:0,   end:45,   label:"Bloom",       targetWater:bloom, note:`Vierte ${bloom} g y remueve hasta mojar todo el café` },
         { id:"pour1",    start:45,  end:75,   label:"1er vertido", targetWater:mid,   note:`Sube a ${mid} g en 30 s` },
         { id:"pour2",    start:75,  end:105,  label:"2do vertido", targetWater:total, note:`Sube a ${total} g en 30 s, más despacio` },
@@ -42,18 +49,29 @@ const RECIPES = {
   },
   onecup: {
     id: "onecup",
-    name: "HOFFMANN · 1 CUP V60 TECHNIQUE",
-    shortName: "1 Cup Technique",
+    name: { es:"Hoffmann · Técnica V60 para 1 taza", en:"Hoffmann · 1 Cup V60 Technique" },
+    shortName: { es:"Técnica para 1 taza", en:"1 Cup Technique" },
     color: "#A36A3D",
     ratioGPerL: 60,
     defaultCoffee: 15,
-    phases: (coffeeG, ratioGPerL) => {
+    phases: (coffeeG, ratioGPerL, lang) => {
       const total = Math.round(coffeeG * (1000 / ratioGPerL));
       const g20 = Math.round(total * 0.2);
       const g40 = Math.round(total * 0.4);
       const g60 = Math.round(total * 0.6);
       const g80 = Math.round(total * 0.8);
-      return [
+      return lang === "en" ? [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",      targetWater:g20,  note:`Pour ~${g20} g. At 10-15 s, gently swirl` },
+        { id:"pour1",    start:45,  end:60,   label:"Pour 1",     targetWater:g40,  note:`Rise to ~${g40} g` },
+        { id:"pause1",   start:60,  end:70,   label:"Pause",      targetWater:g40,  note:"Let it rest, no pouring" },
+        { id:"pour2",    start:70,  end:80,   label:"Pour 2",     targetWater:g60,  note:`Rise to ~${g60} g` },
+        { id:"pause2",   start:80,  end:90,   label:"Pause",      targetWater:g60,  note:"Let it rest, no pouring" },
+        { id:"pour3",    start:90,  end:100,  label:"Pour 3",     targetWater:g80,  note:`Rise to ~${g80} g` },
+        { id:"pause3",   start:100, end:110,  label:"Pause",      targetWater:g80,  note:"Let it rest, no pouring" },
+        { id:"pour4",    start:110, end:120,  label:"Final pour", targetWater:total,note:`Rise to ~${total} g, final pour` },
+        { id:"swirl",    start:120, end:130,  label:"Swirl",      targetWater:total,note:"Gently swirl the V60" },
+        { id:"drawdown", start:130, end:9999, label:"Drawdown",   targetWater:total,note:"Press Finish once it's done draining" },
+      ] : [
         { id:"bloom",    start:0,   end:45,   label:"Bloom",         targetWater:g20,  note:`Vierte ~${g20} g. A los 10-15 s, remueve suavemente` },
         { id:"pour1",    start:45,  end:60,   label:"Vertido 1",     targetWater:g40,  note:`Sube a ~${g40} g` },
         { id:"pause1",   start:60,  end:70,   label:"Pausa",         targetWater:g40,  note:"Deja reposar, sin verter" },
@@ -67,13 +85,34 @@ const RECIPES = {
       ];
     },
   },
+  frenchpress4min: {
+    id: "frenchpress4min",
+    name: { es:"El método de prensa francesa de 4 minutos", en:"The 4-Minute French Press Method" },
+    shortName: { es:"Prensa francesa · 4 min", en:"French Press · 4 min" },
+    color: "#4A2315",
+    ratioGPerL: 1000 / 15,
+    defaultCoffee: 30,
+    phases: (coffeeG, ratioGPerL, lang) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      const satura = Math.round(total * 0.2);
+      return lang === "en" ? [
+        { id:"bloom",    start:0,   end:30,   label:"Saturate the grounds", targetWater:satura, note:`Pour ~${satura} g of hot water and gently stir` },
+        { id:"pour1",    start:30,  end:270,  label:"Steep with lid on",    targetWater:total,   note:`Pour the rest up to ${total} g, place the lid with the plunger pulled up, and let it steep` },
+        { id:"drawdown", start:270, end:9999, label:"Plunge and serve",     targetWater:total,   note:"Slowly press the plunger down and serve" },
+      ] : [
+        { id:"bloom",    start:0,   end:30,   label:"Satura los granos", targetWater:satura, note:`Vierte ~${satura} g de agua caliente y remueve suavemente` },
+        { id:"pour1",    start:30,  end:270,  label:"Reposo con tapa",   targetWater:total,   note:`Vierte el resto hasta ${total} g, coloca la tapa con el émbolo arriba y deja reposar` },
+        { id:"drawdown", start:270, end:9999, label:"Prensa y sirve",    targetWater:total,   note:"Presiona el émbolo lentamente hacia abajo y sirve" },
+      ];
+    },
+  },
 };
 
 const CATEGORIES = [
-  { id:"v60",    label:"V60",             recipes:["ultimate","onecup"] },
-  { id:"chemex", label:"CHEMEX",          recipes:[] },
-  { id:"prensa", label:"PRENSA FRANCESA", recipes:[] },
-  { id:"moka",   label:"MOKA ITALIANA",   recipes:[] },
+  { id:"v60",    label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
+  { id:"prensa", label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
+  { id:"chemex", label:"CHEMEX",          en:"CHEMEX",          recipes:[] },
+  { id:"moka",   label:"MOKA ITALIANA",   en:"ITALIAN MOKA",    recipes:[] },
 ];
 
 const CUSTOM_COLOR = "#8B5A35";
@@ -98,6 +137,9 @@ function hexToRgba(hex, alpha) {
 }
 
 function PourLab() {
+  const [lang, setLang] = useState("es");
+  const t = (es, en) => (lang === "es" ? es : en);
+
   const [screen, setScreen]         = useState("menu");
   const [recipeId, setRecipeId]     = useState("ultimate");
   const [customRecipeObj, setCustomRecipeObj] = useState(null);
@@ -113,9 +155,13 @@ function PourLab() {
   const [started, setStarted]       = useState(false);
   const [isDone, setIsDone]         = useState(false);
   const [runPhases, setRunPhases]   = useState([]);
+  const [totalElapsed, setTotalElapsed] = useState(0);
   const rafRef     = useRef(null);
   const startRef   = useRef(null);
   const offsetRef  = useRef(0);
+  const totalRafRef    = useRef(null);
+  const totalStartRef  = useRef(null);
+  const totalOffsetRef = useRef(0);
 
   const [customBrewer, setCustomBrewer]         = useState("");
   const [customWaterG, setCustomWaterG]         = useState(500);
@@ -129,7 +175,7 @@ function PourLab() {
   const [calcWater, setCalcWater]   = useState("300");
 
   const totalWater = recipe ? Math.round(coffeeG * (1000 / recipe.ratioGPerL)) : 0;
-  const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10) / 10}` : "--";
+  const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10 + 1e-9) / 10}` : "--";
 
   function openRecipe(id) {
     const r = RECIPES[id];
@@ -139,8 +185,9 @@ function PourLab() {
     setInputVal(String(r.defaultCoffee));
     setCoffeeName("");
     setGrind("");
-    setRunPhases(r.phases(r.defaultCoffee, r.ratioGPerL));
+    setRunPhases(r.phases(r.defaultCoffee, r.ratioGPerL, lang));
     setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
+    setTotalElapsed(0); totalOffsetRef.current = 0; totalStartRef.current = null;
     setScreen("app");
   }
 
@@ -210,7 +257,7 @@ function PourLab() {
 
     if (customMode === "free") {
       finalPhases = [
-        { id:"free", start:0, end:9999, label:"Extracción libre", targetWater:Math.round(water), note:"Sin fases definidas · sigue tu propio ritmo" },
+        { id:"free", start:0, end:9999, label: t("Extracción libre","Free extraction"), targetWater:Math.round(water), note: t("Sin fases definidas · sigue tu propio ritmo","No phases defined · follow your own pace") },
       ];
     } else {
       let start = 0;
@@ -223,16 +270,16 @@ function PourLab() {
         start += dur;
         return ph;
       });
-      finalPhases.push({ id:"drawdown", start, end:9999, label:"Drenado", targetWater:Math.round(water), note:"Presiona Finalizar cuando termine de drenar" });
+      finalPhases.push({ id:"drawdown", start, end:9999, label: t("Drenado","Drawdown"), targetWater:Math.round(water), note: t("Presiona Finalizar cuando termine de drenar","Press Finish once it's done draining") });
     }
 
     const ratioGPerL  = coffee > 0 ? (coffee * 1000) / water : 60;
-    const brewerLabel = customBrewer.trim() ? customBrewer.trim().toUpperCase() : "PERSONALIZADA";
+    const brewerLabel = customBrewer.trim() ? customBrewer.trim().toUpperCase() : t("PERSONALIZADA","CUSTOM");
 
     setCustomRecipeObj({
       id:"custom",
-      name:`MI RECETA · ${brewerLabel}`,
-      shortName:"Mi receta",
+      name:{ es:`Mi receta · ${brewerLabel}`, en:`My Recipe · ${brewerLabel}` },
+      shortName:{ es:"Mi receta", en:"My Recipe" },
       color:CUSTOM_COLOR,
       ratioGPerL,
       defaultCoffee:coffee,
@@ -242,6 +289,7 @@ function PourLab() {
     setCoffeeG(coffee);
     setRunPhases(finalPhases);
     setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
+    setTotalElapsed(0); totalOffsetRef.current = 0; totalStartRef.current = null;
     setScreen("app");
   }
 
@@ -273,9 +321,21 @@ function PourLab() {
 
   useEffect(() => {
     if (screen === "app" && recipeId !== "custom" && !started && recipe) {
-      setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL));
+      setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL, lang));
     }
-  }, [coffeeG, recipeId, started, screen]);
+  }, [coffeeG, recipeId, started, screen, lang]);
+
+  useEffect(() => {
+    if (!started || isDone) return;
+    const tick = (now) => {
+      if (totalStartRef.current === null) totalStartRef.current = now;
+      const secs = totalOffsetRef.current + (now - totalStartRef.current) / 1000;
+      setTotalElapsed(secs);
+      totalRafRef.current = requestAnimationFrame(tick);
+    };
+    totalRafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(totalRafRef.current);
+  }, [started, isDone]);
 
   const handleStartPause = useCallback(() => {
     if (running) {
@@ -312,34 +372,47 @@ function PourLab() {
 
   const handleReset = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    cancelAnimationFrame(totalRafRef.current);
     setRunning(false); setElapsed(0); setStarted(false); setIsDone(false);
+    setTotalElapsed(0);
     offsetRef.current = 0; startRef.current = null;
-    if (recipe) setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL));
-  }, [recipe, coffeeG]);
+    totalOffsetRef.current = 0; totalStartRef.current = null;
+    if (recipe) setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL, lang));
+  }, [recipe, coffeeG, lang]);
 
   function backToMenu() {
     handleReset();
     setScreen("menu");
   }
 
+  const LangToggle = () => (
+    <div style={s.langToggle}>
+      <button style={{...s.langBtn, ...(lang==="es"?s.langBtnActive:{})}} onClick={()=>setLang("es")}>ES</button>
+      <button style={{...s.langBtn, ...(lang==="en"?s.langBtnActive:{})}} onClick={()=>setLang("en")}>EN</button>
+    </div>
+  );
+
   if (screen === "menu") {
     return (
       <div style={s.page}>
         <div style={s.card}>
+          <div style={s.topBar}>
+            <div />
+            <LangToggle />
+          </div>
           <div style={s.appName}>☕ PourLab</div>
-          <div style={s.menuTitle}>BREWING TECHNIQUES</div>
 
           <div style={s.categoryBlock}>
-            <div style={s.categoryLabel}>MI PROPIA RECETA</div>
+            <div style={s.categoryLabel}>{t("MI PROPIA RECETA","MY OWN RECIPE")}</div>
             <button style={{...s.recipeItemBtn, background:CUSTOM_COLOR}} onClick={openCustomSetup}>
-              <span>Crear receta personalizada</span>
+              <span>{t("Crear receta personalizada","Create custom recipe")}</span>
               <span style={s.chevron}>›</span>
             </button>
           </div>
 
           {CATEGORIES.map(cat => (
             <div key={cat.id} style={s.categoryBlock}>
-              <div style={s.categoryLabel}>{cat.label}</div>
+              <div style={s.categoryLabel}>{t(cat.label, cat.en)}</div>
               {cat.recipes.length > 0 ? (
                 cat.recipes.map(rid => (
                   <button
@@ -347,20 +420,20 @@ function PourLab() {
                     style={{...s.recipeItemBtn, background:RECIPES[rid].color}}
                     onClick={()=>openRecipe(rid)}
                   >
-                    <span>{RECIPES[rid].name}</span>
+                    <span>{t(RECIPES[rid].name.es, RECIPES[rid].name.en)}</span>
                     <span style={s.chevron}>›</span>
                   </button>
                 ))
               ) : (
-                <div style={s.comingSoon}>en desarrollo</div>
+                <div style={s.comingSoon}>{t("en desarrollo","coming soon")}</div>
               )}
             </div>
           ))}
 
           <div style={s.categoryBlock}>
-            <div style={s.categoryLabel}>HERRAMIENTAS</div>
+            <div style={s.categoryLabel}>{t("HERRAMIENTAS","TOOLS")}</div>
             <button style={{...s.recipeItemBtn, background:TOOL_COLOR}} onClick={openRatioCalc}>
-              <span>Calculadora de ratio</span>
+              <span>{t("Calculadora de ratio","Ratio calculator")}</span>
               <span style={s.chevron}>›</span>
             </button>
           </div>
@@ -380,39 +453,40 @@ function PourLab() {
       <div style={s.page}>
         <div style={s.card}>
           <div style={s.topBar}>
-            <button style={{...s.backBtn, color:CUSTOM_COLOR}} onClick={()=>setScreen("menu")}>‹ Recetas</button>
+            <button style={{...s.backBtn, color:CUSTOM_COLOR}} onClick={()=>setScreen("menu")}>{t("‹ Recetas","‹ Recipes")}</button>
+            <LangToggle />
           </div>
-          <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>MI PROPIA RECETA</div>
+          <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>{t("MI PROPIA RECETA","MY OWN RECIPE")}</div>
 
           <div style={s.setup}>
-            <input type="text" placeholder="Cafetera (ej. V60, Prensa Francesa, Melitta...)" value={customBrewer} onChange={e=>setCustomBrewer(e.target.value)} style={{...s.input, fontSize:14}} />
-            <input type="text" placeholder="Nombre del café (ej. Huila Natural)" value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
-            <input type="text" placeholder="Molienda (ej. K6 · click 40)" value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+            <input type="text" placeholder={t("Cafetera (ej. V60, Prensa Francesa, Melitta...)","Brewer (e.g. V60, French Press, Melitta...)")} value={customBrewer} onChange={e=>setCustomBrewer(e.target.value)} style={{...s.input, fontSize:14}} />
+            <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+            <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
 
             <div style={s.customGrid}>
               <div>
-                <div style={s.smallLabel}>Café (g)</div>
+                <div style={s.smallLabel}>{t("Café (g)","Coffee (g)")}</div>
                 <input type="number" value={coffeeG} onChange={e=>setCoffeeG(parseFloat(e.target.value)||0)} style={s.inputSmall} min="1" />
               </div>
               <div>
-                <div style={s.smallLabel}>Agua (ml)</div>
+                <div style={s.smallLabel}>{t("Agua (ml)","Water (ml)")}</div>
                 <input type="number" value={customWaterG} onChange={e=>setCustomWaterG(parseFloat(e.target.value)||0)} style={s.inputSmall} min="1" />
               </div>
             </div>
-            <div style={s.inputHint}>ratio {coffeeG > 0 ? `1:${Math.floor((customWaterG / coffeeG) * 10) / 10}` : "--"}</div>
+            <div style={s.inputHint}>ratio {coffeeG > 0 ? `1:${Math.floor((customWaterG / coffeeG) * 10 + 1e-9) / 10}` : "--"}</div>
 
             <div style={{...s.modeRow, marginTop:16}}>
-              <button style={{...s.modeBtn, ...(customMode==="phases"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("phases")}>Con fases</button>
-              <button style={{...s.modeBtn, ...(customMode==="free"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("free")}>Sin fases</button>
+              <button style={{...s.modeBtn, ...(customMode==="phases"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("phases")}>{t("Con fases","With phases")}</button>
+              <button style={{...s.modeBtn, ...(customMode==="free"?{background:CUSTOM_COLOR,color:"#fffdfa",border:`1px solid ${CUSTOM_COLOR}`}:{})}} onClick={()=>setCustomMode("free")}>{t("Sin fases","No phases")}</button>
             </div>
 
             {customMode === "phases" && (
               <div style={s.phasesBuilder}>
                 <div style={{...s.phaseGoalNote, color: overTotal ? "#c0392b" : "#8a7660", fontWeight: overTotal ? 700 : 400}}>
-                  {overTotal ? "⚠ " : ""}meta: {customWaterG} g · llevas vertidos: {totalAssigned} g
+                  {overTotal ? "⚠ " : ""}{t(`meta: ${customWaterG} g · llevas vertidos: ${totalAssigned} g`, `goal: ${customWaterG} g · poured so far: ${totalAssigned} g`)}
                 </div>
                 <div style={s.phaseDraftHeader}>
-                  <span style={s.phaseDraftInputWide}>Fase</span>
+                  <span style={s.phaseDraftInputWide}>{t("Fase","Phase")}</span>
                   <span style={s.phaseHeaderIconBox}>⏳</span>
                   <span style={s.phaseHeaderIconBox}>💧</span>
                   <span style={{width:22}} />
@@ -423,7 +497,7 @@ function PourLab() {
                   const overLimit = runningSum > customWaterG;
                   return (
                     <div key={d.id} style={s.phaseDraftRow}>
-                      <input type="text" value={d.label} onChange={e=>updatePhaseDraft(d.id,"label",e.target.value)} placeholder="Fase" style={s.phaseDraftInputWide} />
+                      <input type="text" value={d.label} onChange={e=>updatePhaseDraft(d.id,"label",e.target.value)} placeholder={t("Fase","Phase")} style={s.phaseDraftInputWide} />
                       <div style={s.phaseDraftInputWrapSmall}>
                         <input type="number" value={d.duration} onChange={e=>updatePhaseDraft(d.id,"duration",e.target.value)} placeholder="45" style={s.phaseDraftInputSmall} />
                         <span style={s.unitSuffix}>s</span>
@@ -442,15 +516,15 @@ function PourLab() {
                     </div>
                   );
                 })}
-                <button style={{...s.addPhaseBtn, color:CUSTOM_COLOR, borderColor:CUSTOM_COLOR}} onClick={addPhaseDraft}>+ Añadir fase</button>
+                <button style={{...s.addPhaseBtn, color:CUSTOM_COLOR, borderColor:CUSTOM_COLOR}} onClick={addPhaseDraft}>{t("+ Añadir fase","+ Add phase")}</button>
                 {underTotal && (
-                  <div style={s.phaseUnderNote}>Te faltan {customWaterG - totalAssigned} g para llegar a la meta de {customWaterG} g</div>
+                  <div style={s.phaseUnderNote}>{t(`Te faltan ${customWaterG - totalAssigned} g para llegar a la meta de ${customWaterG} g`, `You need ${customWaterG - totalAssigned} more g to reach the goal of ${customWaterG} g`)}</div>
                 )}
               </div>
             )}
 
             {customMode === "free" && (
-              <div style={s.freeNote}>El temporizador correrá libremente. Presiona Finalizar cuando termine tu extracción.</div>
+              <div style={s.freeNote}>{t("El temporizador correrá libremente. Presiona Finalizar cuando termine tu extracción.","The timer will run freely. Press Finish when your extraction is done.")}</div>
             )}
 
             <button
@@ -458,7 +532,7 @@ function PourLab() {
               onClick={startCustomRecipe}
               disabled={!canStart}
             >
-              {canStart ? "Comenzar receta" : "Asigna toda el agua para comenzar"}
+              {canStart ? t("Comenzar receta","Start recipe") : t("Asigna toda el agua para comenzar","Assign all the water to start")}
             </button>
           </div>
         </div>
@@ -471,9 +545,10 @@ function PourLab() {
       <div style={s.page}>
         <div style={s.card}>
           <div style={s.topBar}>
-            <button style={{...s.backBtn, color:TOOL_COLOR}} onClick={()=>setScreen("menu")}>‹ Recetas</button>
+            <button style={{...s.backBtn, color:TOOL_COLOR}} onClick={()=>setScreen("menu")}>{t("‹ Recetas","‹ Recipes")}</button>
+            <LangToggle />
           </div>
-          <div style={{...s.eyebrow, color:TOOL_COLOR}}>CALCULADORA DE RATIO</div>
+          <div style={{...s.eyebrow, color:TOOL_COLOR}}>{t("CALCULADORA DE RATIO","RATIO CALCULATOR")}</div>
 
           <div style={s.setup}>
             <div style={s.ratioBigLabel}>1:{calcRatio}</div>
@@ -493,15 +568,15 @@ function PourLab() {
 
             <div style={s.customGrid}>
               <div>
-                <div style={s.smallLabel}>Café (g)</div>
+                <div style={s.smallLabel}>{t("Café (g)","Coffee (g)")}</div>
                 <input type="number" value={calcCoffee} onChange={e=>handleCalcCoffeeChange(e.target.value)} style={s.inputSmall} min="0" />
               </div>
               <div>
-                <div style={s.smallLabel}>Agua (ml)</div>
+                <div style={s.smallLabel}>{t("Agua (ml)","Water (ml)")}</div>
                 <input type="number" value={calcWater} onChange={e=>handleCalcWaterChange(e.target.value)} style={s.inputSmall} min="0" />
               </div>
             </div>
-            <div style={s.inputHint}>Cambia cualquiera de los dos y el otro se ajusta solo, según el ratio elegido.</div>
+            <div style={s.inputHint}>{t("Cambia cualquiera de los dos y el otro se ajusta solo, según el ratio elegido.","Change either one and the other adjusts automatically, based on the ratio you chose.")}</div>
           </div>
         </div>
       </div>
@@ -520,8 +595,8 @@ function PourLab() {
   const isDrawdown   = phase.id === "drawdown" || phase.id === "free";
 
   const now = new Date();
-  const dateStr = now.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
-  const timeStr = now.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",hour12:false});
+  const dateStr = now.toLocaleDateString(lang === "es" ? "es-CO" : "en-US", {day:"2-digit",month:"long",year:"numeric"});
+  const timeStr = now.toLocaleTimeString(lang === "es" ? "es-CO" : "en-US", {hour:"2-digit",minute:"2-digit",hour12:false});
 
   const summaryPhases = [
     ...runPhases.filter(p => p.id !== "drawdown" && p.id !== "free").map(p => ({
@@ -529,27 +604,31 @@ function PourLab() {
       label: p.label,
       detalle: `${p.targetWater} g`,
     })),
-    { t:"fin", label:"Drenado completo", detalle: fmtTime(elapsed) },
+    { t:"fin", label: t("Drenado completo","Brew complete"), detalle: fmtTime(totalElapsed) },
   ];
+
+  const recipeName = t(recipe.name.es, recipe.name.en);
+  const recipeShortName = t(recipe.shortName.es, recipe.shortName.en);
 
   return (
     <div style={s.page}>
       <div style={s.card}>
         <div style={s.topBar}>
-          <button style={{...s.backBtn, color:recipe.color}} onClick={backToMenu}>‹ Recetas</button>
+          <button style={{...s.backBtn, color:recipe.color}} onClick={backToMenu}>{t("‹ Recetas","‹ Recipes")}</button>
+          <LangToggle />
         </div>
-        <div style={{...s.eyebrow, color:recipe.color}}>{recipe.name}</div>
+        <div style={{...s.eyebrow, color:recipe.color}}>{recipeName}</div>
 
         {!started && recipeId !== "custom" && (
           <div style={s.setup}>
             <div style={s.modeRow}>
-              <button style={{...s.modeBtn,...(inputMode==="coffee"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("coffee")}>Café (g)</button>
-              <button style={{...s.modeBtn,...(inputMode==="water"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("water")}>Agua (ml)</button>
+              <button style={{...s.modeBtn,...(inputMode==="coffee"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("coffee")}>{t("Café (g)","Coffee (g)")}</button>
+              <button style={{...s.modeBtn,...(inputMode==="water"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("water")}>{t("Agua (ml)","Water (ml)")}</button>
             </div>
             <input type="number" value={inputVal} onChange={e=>handleInput(e.target.value)} style={s.input} min="1" />
-            <div style={s.inputHint}>→ {coffeeG} g café · {totalWater} ml agua · ratio {ratioLabel}</div>
-            <input type="text" placeholder="Nombre del café (ej. Huila Natural)" value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:10}} />
-            <input type="text" placeholder="Molienda (ej. K6 · click 40)" value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+            <div style={s.inputHint}>→ {coffeeG} g {t("café","coffee")} · {totalWater} ml {t("agua","water")} · ratio {ratioLabel}</div>
+            <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:10}} />
+            <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
           </div>
         )}
 
@@ -560,7 +639,7 @@ function PourLab() {
               {coffeeName && <div style={s.summaryName}>{coffeeName}</div>}
               {grind && <div style={s.summaryGrind}>{grind}</div>}
             </div>
-            <div style={s.inputHint}>{coffeeG} g café · {totalWater} ml agua · ratio {ratioLabel}</div>
+            <div style={s.inputHint}>{coffeeG} g {t("café","coffee")} · {totalWater} ml {t("agua","water")} · ratio {ratioLabel}</div>
           </div>
         )}
 
@@ -576,17 +655,17 @@ function PourLab() {
           <>
             <div style={s.waterBlock}>
               <div style={s.waterNumber}>{phase.targetWater}<span style={{...s.waterUnit, color:recipe.color}}>g</span></div>
-              <div style={s.waterCaption}>{isPour ? "llega hasta aquí" : "agua en la jarra"}</div>
+              <div style={s.waterCaption}>{isPour ? t("llega hasta aquí","pour up to here") : t("agua en la jarra","water in the carafe")}</div>
             </div>
 
             <div style={s.timerBlock}>
-              <div style={{...s.timerNumber, color:recipe.color}}>{isDrawdown ? fmtTime(elapsed) : fmtTime(phaseRem)}</div>
-              <div style={s.timerCaption}>{isDrawdown ? "tiempo total · presiona finalizar cuando termines" : "tiempo restante de esta fase"}</div>
+              <div style={{...s.timerNumber, color:recipe.color}}>{isDrawdown ? fmtTime(totalElapsed) : fmtTime(phaseRem)}</div>
+              <div style={s.timerCaption}>{isDrawdown ? t("tiempo total · presiona finalizar cuando termines","total time · press finish when you're done") : t("tiempo restante de esta fase","time left in this phase")}</div>
             </div>
 
             <div style={s.phaseRow}>
               <div style={s.phaseLabel}>{phase.label}</div>
-              <div style={s.phaseTime}>t {fmtTime(elapsed)}</div>
+              <div style={s.phaseTime}>t {fmtTime(totalElapsed)}</div>
             </div>
             <div style={s.note}>{phase.note}</div>
 
@@ -605,7 +684,7 @@ function PourLab() {
 
         {isDone && (
           <div style={s.summary}>
-            <div style={s.summaryTitle}>☕ Extracción completada</div>
+            <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
             <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
             {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
@@ -618,9 +697,9 @@ function PourLab() {
 
             <div style={s.metricsGrid}>
               {[
-                { label:"Café",   value:`${coffeeG} g` },
-                { label:"Agua",   value:`${totalWater} ml` },
-                { label:"Tiempo", value:fmtTime(elapsed) },
+                { label:t("Café","Coffee"),   value:`${coffeeG} g` },
+                { label:t("Agua","Water"),   value:`${totalWater} ml` },
+                { label:t("Tiempo","Time"), value:fmtTime(totalElapsed) },
                 { label:"Ratio",  value:ratioLabel },
               ].map(m => (
                 <div key={m.label} style={s.metricBox}>
@@ -632,7 +711,7 @@ function PourLab() {
 
             <div style={s.divider} />
 
-            <div style={{...s.fasesTitle, color:recipe.color}}>FASES · {recipe.shortName}</div>
+            <div style={{...s.fasesTitle, color:recipe.color}}>{t("FASES","PHASES")} · {recipeShortName}</div>
             {summaryPhases.map((f,i) => (
               <div key={`${f.t}-${i}`} style={s.faseRow}>
                 <span style={{...s.faseT, color:recipe.color}}>{f.t}</span>
@@ -646,17 +725,17 @@ function PourLab() {
         <div style={s.controls}>
           {!isDone && (
             <button style={s.resetBtn} onClick={handleReset}>
-              Reiniciar
+              {t("Reiniciar","Reset")}
             </button>
           )}
           {!isDone && !isDrawdown && (
             <>
               <button style={{...s.startBtn, background:recipe.color, boxShadow:`0 8px 20px ${hexToRgba(recipe.color,0.35)}`}} onClick={handleStartPause}>
-                {running ? "Pausar" : elapsed > 0 ? "Reanudar" : "Empezar"}
+                {running ? t("Pausar","Pause") : elapsed > 0 ? t("Reanudar","Resume") : t("Empezar","Start")}
               </button>
               {started && (
                 <button style={{...s.nextBtn, color:recipe.color, borderColor:recipe.color}} onClick={handleNextPhase}>
-                  Siguiente ›
+                  {t("Siguiente ›","Next ›")}
                 </button>
               )}
             </>
@@ -664,16 +743,16 @@ function PourLab() {
           {!isDone && isDrawdown && (
             <>
               <button style={{...s.startBtn, background:"#8a7660", boxShadow:"none", flex:"0 0 100px"}} onClick={handleStartPause}>
-                {running ? "Pausar" : elapsed > 0 ? "Reanudar" : "Empezar"}
+                {running ? t("Pausar","Pause") : elapsed > 0 ? t("Reanudar","Resume") : t("Empezar","Start")}
               </button>
               <button style={{...s.startBtn, background:recipe.color, boxShadow:`0 8px 20px ${hexToRgba(recipe.color,0.35)}`, flex:1}} onClick={handleFinish}>
-                Finalizar
+                {t("Finalizar","Finish")}
               </button>
             </>
           )}
         </div>
 
-        {!isDone && <div style={s.totalTime}>t = {fmtTime(elapsed)}</div>}
+        {!isDone && <div style={s.totalTime}>t = {fmtTime(totalElapsed)}</div>}
       </div>
     </div>
   );
@@ -685,10 +764,13 @@ const s = {
   eyebrow:      { fontSize:12, letterSpacing:"0.14em", fontWeight:700, color:"#b5651d", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   subEyebrow:   { fontSize:12, color:"#8a7660", textAlign:"center", marginTop:4, marginBottom:10, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   setup:        { marginTop:14, marginBottom:4 },
-  topBar:       { display:"flex", justifyContent:"flex-start", marginBottom:6 },
+  topBar:       { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 },
   backBtn:      { border:"none", background:"none", color:"#b5651d", fontWeight:700, fontSize:13, cursor:"pointer", padding:0, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  langToggle:   { display:"flex", gap:4 },
+  langBtn:      { border:"1px solid #ecdfc9", background:"#fff", color:"#8a6a4f", fontWeight:700, fontSize:10.5, cursor:"pointer", padding:"4px 8px", borderRadius:6, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  langBtnActive:{ background:"#3d2b1f", color:"#fffdfa", border:"1px solid #3d2b1f" },
   menuTitle:    { fontSize:13, letterSpacing:"0.14em", fontWeight:700, color:"#b5651d", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:22 },
-  appName:      { fontSize:22, fontWeight:700, color:"#3d2b1f", textAlign:"center", marginBottom:6, fontFamily:"'Iowan Old Style','Palatino Linotype',Georgia,serif" },
+  appName:      { fontSize:22, fontWeight:700, color:"#3d2b1f", textAlign:"center", marginBottom:26, fontFamily:"'Iowan Old Style','Palatino Linotype',Georgia,serif" },
   categoryBlock:{ marginBottom:22 },
   categoryLabel:{ fontSize:11, fontWeight:700, color:"#8a7660", letterSpacing:"0.12em", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:8, borderBottom:"1px solid #ecdfc9", paddingBottom:6 },
   recipeItemBtn:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", border:"none", borderRadius:10, marginBottom:7, color:"#fffdfa", fontWeight:400, fontSize:11.5, letterSpacing:"0.01em", cursor:"pointer", textAlign:"left", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
