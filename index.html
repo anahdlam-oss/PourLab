@@ -683,7 +683,7 @@ function PourLab() {
         )}
 
         {isDone && (
-          <div style={s.summary}>
+          <div ref={summaryRef} style={s.summary}>
             <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
             <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
@@ -720,6 +720,12 @@ function PourLab() {
               </div>
             ))}
           </div>
+        )}
+
+        {isDone && (
+          <button style={{...s.startBtn, width:"100%", marginTop:14, background:recipe.color, boxShadow:`0 8px 20px ${hexToRgba(recipe.color,0.35)}`, opacity: capturing ? 0.6 : 1}} onClick={handleDownload}>
+            {capturing ? t("Generando imagen…","Generating image…") : t("Descargar resumen","Download summary")}
+          </button>
         )}
 
         <div style={s.controls}>
