@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; }
@@ -160,6 +161,8 @@ function PourLab() {
   const totalRafRef    = useRef(null);
   const totalStartRef  = useRef(null);
   const totalOffsetRef = useRef(0);
+  const summaryRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
 
   const [customBrewer, setCustomBrewer]         = useState("");
   const [customWaterG, setCustomWaterG]         = useState(500);
@@ -167,6 +170,7 @@ function PourLab() {
   const [customPhaseDrafts, setCustomPhaseDrafts] = useState([
     { id:"p0", label:"Bloom", duration:"45", water:"60" },
   ]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   const [calcRatio, setCalcRatio]   = useState(15);
   const [calcCoffee, setCalcCoffee] = useState("20");
@@ -174,6 +178,24 @@ function PourLab() {
 
   const totalWater = recipe ? Math.round(coffeeG * (1000 / recipe.ratioGPerL)) : 0;
   const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10 + 1e-9) / 10}` : "--";
+
+  function handleDownload() {
+    if (!summaryRef.current || !window.html2canvas) return;
+    setCapturing(true);
+    window.html2canvas(summaryRef.current, { scale:2, backgroundColor:"#fffdfa", useCORS:true })
+      .then(canvas => {
+        setCapturing(false);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${(coffeeName||"pourlab").replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      })
+      .catch(() => setCapturing(false));
+  }
 
   function openRecipe(id) {
     const r = RECIPES[id];
@@ -196,8 +218,31 @@ function PourLab() {
     setCoffeeG(30);
     setCustomWaterG(500);
     setCustomMode("phases");
+    setSelectedTemplate("");
     setCustomPhaseDrafts([{ id:"p0", label:"Bloom", duration:"45", water:"60" }]);
     setScreen("custom-setup");
+  }
+
+  function loadTemplateIntoCustom(id) {
+    setSelectedTemplate(id);
+    if (!id) return;
+    const r = RECIPES[id];
+    const water = Math.round(r.defaultCoffee * (1000 / r.ratioGPerL));
+    const phases = r.phases(r.defaultCoffee, r.ratioGPerL, lang).filter(p => p.id !== "drawdown");
+    let prevCumulative = 0;
+    const drafts = phases.map((p, i) => {
+      const inc = Math.max(0, p.targetWater - prevCumulative);
+      prevCumulative = p.targetWater;
+      return { id:`tpl${i}`, label:p.label, duration:String(p.end - p.start), water:String(inc) };
+    });
+    const brewerName = id === "frenchpress4min" ? t("Prensa Francesa","French Press") : "V60";
+    setCustomBrewer(brewerName);
+    setCoffeeName("");
+    setGrind("");
+    setCoffeeG(r.defaultCoffee);
+    setCustomWaterG(water);
+    setCustomMode("phases");
+    setCustomPhaseDrafts(drafts);
   }
 
   function openRatioCalc() {
@@ -457,7 +502,19 @@ function PourLab() {
           <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>{t("MI PROPIA RECETA","MY OWN RECIPE")}</div>
 
           <div style={s.setup}>
-            <input type="text" placeholder={t("Cafetera (ej. V60, Prensa Francesa, Melitta...)","Brewer (e.g. V60, French Press, Melitta...)")} value={customBrewer} onChange={e=>setCustomBrewer(e.target.value)} style={{...s.input, fontSize:14}} />
+            <div style={s.templateLabel}>{t("Adaptar una receta existente (opcional)","Adapt an existing recipe (optional)")}</div>
+            <select
+              value={selectedTemplate}
+              onChange={e=>loadTemplateIntoCustom(e.target.value)}
+              style={s.templateSelect}
+            >
+              <option value="">{t("Adaptar receta…","Adapt a recipe…")}</option>
+              {Object.keys(RECIPES).map(id => (
+                <option key={id} value={id}>{t(RECIPES[id].shortName.es, RECIPES[id].shortName.en)}</option>
+              ))}
+            </select>
+
+            <input type="text" placeholder={t("Cafetera (ej. V60, Prensa Francesa, Melitta...)","Brewer (e.g. V60, French Press, Melitta...)")} value={customBrewer} onChange={e=>setCustomBrewer(e.target.value)} style={{...s.input, fontSize:14, marginTop:14}} />
             <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
             <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
 
@@ -802,6 +859,8 @@ const s = {
   phaseDraftInputWarn:{ border:"1.5px solid #c0392b", background:"#fdecea", color:"#c0392b", fontWeight:700 },
   removePhaseBtn:{ border:"none", background:"none", color:"#b5651d", fontSize:14, cursor:"pointer", width:22, flexShrink:0 },
   addPhaseBtn:  { width:"100%", marginTop:4, padding:"9px 0", borderRadius:10, border:"1.5px dashed #b5651d", background:"none", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  templateLabel:{ fontSize:11, color:"#8a7660", marginBottom:6, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  templateSelect:{ width:"100%", padding:"10px 12px", borderRadius:12, border:"1.5px solid #ecdfc9", fontSize:14, color:"#3d2b1f", background:"#fffaf5", fontFamily:"'Helvetica Neue',Arial,sans-serif", cursor:"pointer" },
   phaseUnderNote:{ marginTop:8, fontSize:12, color:"#8a7660", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   freeNote:     { marginTop:12, fontSize:12.5, color:"#8a7660", textAlign:"center", fontFamily:"'Helvetica Neue',Arial,sans-serif", lineHeight:1.5 },
   waterBlock:   { textAlign:"center", padding:"14px 0 8px" },
