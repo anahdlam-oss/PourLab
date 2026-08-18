@@ -182,7 +182,7 @@ function PourLab() {
   function handleDownload() {
     if (!summaryRef.current || !window.html2canvas) return;
     setCapturing(true);
-    window.html2canvas(summaryRef.current, { scale:2, backgroundColor:"#fffdfa", useCORS:true })
+    window.html2canvas(summaryRef.current, { scale:2, backgroundColor:"#f3e8d9", useCORS:true })
       .then(canvas => {
         setCapturing(false);
         canvas.toBlob(blob => {
@@ -738,7 +738,7 @@ function PourLab() {
         )}
 
         {isDone && (
-          <div ref={summaryRef} style={s.summary}>
+          <div style={s.summary}>
             <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
             <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
             <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
@@ -775,6 +775,49 @@ function PourLab() {
                 <span style={s.faseDetalle}>{f.detalle}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {isDone && (
+          <div style={s.hiddenCapture}>
+            <div ref={summaryRef} style={s.captureCard}>
+              <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
+              <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
+              <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
+
+              {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
+                <div style={s.summaryHero}>
+                  {recipeId==="custom" && customBrewer && <div style={s.summaryGrind}>{customBrewer}</div>}
+                  {coffeeName && <div style={s.summaryName}>{coffeeName}</div>}
+                  {grind && <div style={s.summaryGrind}>{grind}</div>}
+                </div>
+              )}
+
+              <div style={s.metricsGrid}>
+                {[
+                  { label:t("Café","Coffee"),   value:`${coffeeG} g` },
+                  { label:t("Agua","Water"),   value:`${totalWater} ml` },
+                  { label:t("Tiempo","Time"), value:fmtTime(totalElapsed) },
+                  { label:"Ratio",  value:ratioLabel },
+                ].map(m => (
+                  <div key={m.label} style={s.metricBox}>
+                    <div style={{...s.metricValue, color:recipe.color}}>{m.value}</div>
+                    <div style={s.metricLabel}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={s.divider} />
+
+              <div style={{...s.fasesTitle, color:recipe.color}}>{t("FASES","PHASES")} · {recipeShortName}</div>
+              {summaryPhases.map((f,i) => (
+                <div key={`h-${f.t}-${i}`} style={s.faseRow}>
+                  <span style={{...s.faseT, color:recipe.color}}>{f.t}</span>
+                  <span style={s.faseLabel}>{f.label}</span>
+                  <span style={s.faseDetalle}>{f.detalle}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -879,7 +922,9 @@ const s = {
   progressFill: { height:"100%", borderRadius:4, transition:"width 0.1s linear" },
   timeline:     { display:"flex", gap:3, marginTop:16, height:8 },
   timelineSeg:  { borderRadius:3, transition:"background 0.3s ease" },
-  summary:      { marginTop:14, padding:"20px 20px 24px", background:"#fffdfa" },
+  summary:      { marginTop:14 },
+  hiddenCapture:{ position:"fixed", top:0, left:"-9999px", padding:24, pointerEvents:"none" },
+  captureCard:  { width:364, padding:"24px 20px", borderRadius:24, border:"1px solid #ecdfc9", background:"#fffdfa", boxShadow:"0 20px 50px rgba(80,50,20,.25)", boxSizing:"border-box" },
   summaryTitle: { fontSize:20, fontWeight:700, color:"#3d2b1f", textAlign:"center" },
   summaryDate:  { fontSize:12, color:"#b5a48c", textAlign:"center", marginTop:4, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   summaryHero:  { marginTop:14, padding:"14px 16px", background:"#fdf5ec", borderRadius:14, border:"1px solid #ecdfc9", textAlign:"center" },
