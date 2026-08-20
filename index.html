@@ -183,7 +183,8 @@ function PourLab() {
   const [cupProcess, setCupProcess]   = useState("");
   const [cupMethod, setCupMethod]     = useState("");
   const [cupGrind, setCupGrind]       = useState("");
-  const [cupRatio, setCupRatio]       = useState("");
+  const [cupCoffeeG, setCupCoffeeG]   = useState("15");
+  const [cupWaterG, setCupWaterG]     = useState("250");
   const [cupScore, setCupScore]       = useState(7);
   const [cupComments, setCupComments] = useState("");
   const [cupCapturing, setCupCapturing] = useState(false);
@@ -287,7 +288,8 @@ function PourLab() {
     setCupProcess("");
     setCupMethod("");
     setCupGrind("");
-    setCupRatio("");
+    setCupCoffeeG("15");
+    setCupWaterG("250");
     setCupScore(7);
     setCupComments("");
     setCupDone(false);
@@ -770,7 +772,18 @@ function PourLab() {
               <input type="text" placeholder={t("Proceso","Process")} value={cupProcess} onChange={e=>setCupProcess(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
               <input type="text" placeholder={t("Método de preparación","Brew method")} value={cupMethod} onChange={e=>setCupMethod(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
               <input type="text" placeholder={t("Molienda","Grind")} value={cupGrind} onChange={e=>setCupGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
-              <input type="text" placeholder={t("Ratio (ej. 1:16)","Ratio (e.g. 1:16)")} value={cupRatio} onChange={e=>setCupRatio(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+
+              <div style={s.customGrid}>
+                <div>
+                  <div style={s.smallLabel}>{t("Café (g)","Coffee (g)")}</div>
+                  <input type="number" value={cupCoffeeG} onChange={e=>setCupCoffeeG(e.target.value)} style={s.inputSmall} min="0" />
+                </div>
+                <div>
+                  <div style={s.smallLabel}>{t("Agua (ml)","Water (ml)")}</div>
+                  <input type="number" value={cupWaterG} onChange={e=>setCupWaterG(e.target.value)} style={s.inputSmall} min="0" />
+                </div>
+              </div>
+              <div style={s.inputHint}>ratio {parseFloat(cupCoffeeG) > 0 ? `1:${Math.floor((parseFloat(cupWaterG)/parseFloat(cupCoffeeG)) * 10 + 1e-9) / 10}` : "--"}</div>
 
               <div style={{marginTop:18}}>
                 <div style={s.smallLabel}>{t("Puntuación","Score")}</div>
@@ -808,7 +821,9 @@ function PourLab() {
 
               <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Método","Method")}</span><span style={s.cupFieldValue}>{cupMethod || "--"}</span></div>
               <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Molienda","Grind")}</span><span style={s.cupFieldValue}>{cupGrind || "--"}</span></div>
-              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>Ratio</span><span style={s.cupFieldValue}>{cupRatio || "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Café","Coffee")}</span><span style={s.cupFieldValue}>{cupCoffeeG ? `${cupCoffeeG} g` : "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Agua","Water")}</span><span style={s.cupFieldValue}>{cupWaterG ? `${cupWaterG} ml` : "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>Ratio</span><span style={s.cupFieldValue}>{parseFloat(cupCoffeeG) > 0 ? `1:${Math.floor((parseFloat(cupWaterG)/parseFloat(cupCoffeeG)) * 10 + 1e-9) / 10}` : "--"}</span></div>
 
               <div style={s.divider} />
 
@@ -845,7 +860,9 @@ function PourLab() {
 
               <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Método","Method")}</span><span style={s.cupFieldValue}>{cupMethod || "--"}</span></div>
               <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Molienda","Grind")}</span><span style={s.cupFieldValue}>{cupGrind || "--"}</span></div>
-              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>Ratio</span><span style={s.cupFieldValue}>{cupRatio || "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Café","Coffee")}</span><span style={s.cupFieldValue}>{cupCoffeeG ? `${cupCoffeeG} g` : "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Agua","Water")}</span><span style={s.cupFieldValue}>{cupWaterG ? `${cupWaterG} ml` : "--"}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>Ratio</span><span style={s.cupFieldValue}>{parseFloat(cupCoffeeG) > 0 ? `1:${Math.floor((parseFloat(cupWaterG)/parseFloat(cupCoffeeG)) * 10 + 1e-9) / 10}` : "--"}</span></div>
 
               <div style={s.divider} />
 
