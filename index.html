@@ -107,11 +107,38 @@ const RECIPES = {
       ];
     },
   },
+  aeropress: {
+    id: "aeropress",
+    name: { es:"Hoffmann · El AeroPress definitivo", en:"Hoffmann · The Ultimate AeroPress" },
+    shortName: { es:"AeroPress definitivo", en:"Ultimate AeroPress" },
+    color: "#3B1A0A",
+    ratioGPerL: 60,
+    defaultCoffee: 12,
+    phases: (coffeeG, ratioGPerL, lang) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      return lang === "en" ? [
+        { id:"bloom",    start:0,   end:10,   label:"Add water",          targetWater:total, note:`Add ~${total} g of water as quickly as possible, wetting all the coffee` },
+        { id:"pour1",    start:10,  end:15,   label:"Insert plunger",     targetWater:total, note:"Place the plunger and insert it slightly (~5mm) to create a vacuum" },
+        { id:"pause1",   start:15,  end:135,  label:"Steep",              targetWater:total, note:"Wait 2 minutes" },
+        { id:"swirl",    start:135, end:137,  label:"Swirl",              targetWater:total, note:"Gently swirl the AeroPress and vessel, holding each with one hand, for 1-2 seconds" },
+        { id:"pause2",   start:137, end:167,  label:"Pause",              targetWater:total, note:"Wait 30 more seconds" },
+        { id:"drawdown", start:167, end:9999, label:"Plunge and serve",   targetWater:total, note:`Press the plunger very gently (~30s for ${total}g). When done, pull back slightly to stop dripping` },
+      ] : [
+        { id:"bloom",    start:0,   end:10,   label:"Añade el agua",      targetWater:total, note:`Agrega ~${total} g de agua lo más rápido posible, mojando todo el café` },
+        { id:"pour1",    start:10,  end:15,   label:"Inserta el émbolo",  targetWater:total, note:"Coloca el émbolo e insértalo un poco (~5 mm) para crear vacío" },
+        { id:"pause1",   start:15,  end:135,  label:"Reposo",             targetWater:total, note:"Deja reposar 2 minutos" },
+        { id:"swirl",    start:135, end:137,  label:"Swirl",              targetWater:total, note:"Gira suavemente el Aeropress y el recipiente, sujetando cada uno con una mano, por 1-2 segundos" },
+        { id:"pause2",   start:137, end:167,  label:"Pausa",              targetWater:total, note:"Espera 30 segundos más" },
+        { id:"drawdown", start:167, end:9999, label:"Prensa y sirve",     targetWater:total, note:`Presiona el émbolo muy suavemente (~30 s para ${total} g). Al terminar, jala un poco hacia atrás para detener el goteo` },
+      ];
+    },
+  },
 };
 
 const CATEGORIES = [
-  { id:"v60",    label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
-  { id:"prensa", label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
+  { id:"v60",       label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
+  { id:"prensa",    label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
+  { id:"aeropress", label:"AEROPRESS",       en:"AEROPRESS",        recipes:["aeropress"] },
 ];
 
 const CUSTOM_COLOR = "#8B5A35";
@@ -156,6 +183,7 @@ function PourLab() {
   const [isDone, setIsDone]         = useState(false);
   const [runPhases, setRunPhases]   = useState([]);
   const [totalElapsed, setTotalElapsed] = useState(0);
+  const [phaseTimestamps, setPhaseTimestamps] = useState({});
   const rafRef     = useRef(null);
   const startRef   = useRef(null);
   const offsetRef  = useRef(0);
@@ -223,6 +251,7 @@ function PourLab() {
     setRunPhases(r.phases(r.defaultCoffee, r.ratioGPerL, lang));
     setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
     setTotalElapsed(0); totalOffsetRef.current = 0; totalStartRef.current = null;
+    setPhaseTimestamps({});
     setScreen("app");
   }
 
@@ -414,6 +443,7 @@ function PourLab() {
     setRunPhases(finalPhases);
     setElapsed(0); setStarted(false); setIsDone(false); setRunning(false);
     setTotalElapsed(0); totalOffsetRef.current = 0; totalStartRef.current = null;
+    setPhaseTimestamps({});
     setScreen("app");
   }
 
@@ -461,6 +491,15 @@ function PourLab() {
     return () => cancelAnimationFrame(totalRafRef.current);
   }, [started, isDone]);
 
+  useEffect(() => {
+    if (!recipe || runPhases.length === 0 || !started || isDone) return;
+    const currentPhase = getPhase(runPhases, elapsed);
+    setPhaseTimestamps(prev => {
+      if (prev[currentPhase.id] !== undefined) return prev;
+      return { ...prev, [currentPhase.id]: totalElapsed };
+    });
+  }, [elapsed, runPhases, started, isDone, recipe, totalElapsed]);
+
   const handleStartPause = useCallback(() => {
     if (running) {
       offsetRef.current = elapsed;
@@ -499,6 +538,7 @@ function PourLab() {
     cancelAnimationFrame(totalRafRef.current);
     setRunning(false); setElapsed(0); setStarted(false); setIsDone(false);
     setTotalElapsed(0);
+    setPhaseTimestamps({});
     offsetRef.current = 0; startRef.current = null;
     totalOffsetRef.current = 0; totalStartRef.current = null;
     if (recipe) setRunPhases(recipe.phases(coffeeG, recipe.ratioGPerL, lang));
@@ -899,7 +939,7 @@ function PourLab() {
 
   const summaryPhases = [
     ...runPhases.filter(p => p.id !== "drawdown" && p.id !== "free").map(p => ({
-      t: fmtTime(p.start),
+      t: fmtTime(phaseTimestamps[p.id] !== undefined ? phaseTimestamps[p.id] : p.start),
       label: p.label,
       detalle: `${p.targetWater} g`,
     })),
