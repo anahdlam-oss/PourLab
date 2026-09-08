@@ -144,6 +144,7 @@ const CATEGORIES = [
 const CUSTOM_COLOR = "#8B5A35";
 const TOOL_COLOR = "#623520";
 const CUPPING_COLOR = "#7B4A2D";
+const COLDBREW_COLOR = "#C68B4E";
 
 function fmtTime(s) {
   const m = Math.floor(Math.max(0,s)/60);
@@ -161,6 +162,31 @@ function hexToRgba(hex, alpha) {
   const g = parseInt(h.substring(2,4),16);
   const b = parseInt(h.substring(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function nowLocalDatetimeStr() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatSteepDuration(startStr, endStr, lang) {
+  if (!startStr || !endStr) return "--";
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  const diffMs = end - start;
+  if (isNaN(diffMs) || diffMs < 0) return "--";
+  const totalMin = Math.round(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return lang === "en" ? `${h}h ${m}m` : `${h}h ${m}m`;
+}
+
+function formatDatetimeDisplay(str, lang) {
+  if (!str) return "--";
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return "--";
+  return d.toLocaleString(lang === "es" ? "es-CO" : "en-US", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit", hour12:false });
 }
 
 function PourLab() {
@@ -218,6 +244,17 @@ function PourLab() {
   const [cupCapturing, setCupCapturing] = useState(false);
   const [cupDone, setCupDone] = useState(false);
   const cupRef = useRef(null);
+
+  const [cbCoffeeG, setCbCoffeeG]     = useState(30);
+  const [cbRatio, setCbRatio]         = useState(10);
+  const [cbCoffeeName, setCbCoffeeName] = useState("");
+  const [cbGrind, setCbGrind]         = useState("");
+  const [cbAdditions, setCbAdditions] = useState("");
+  const [cbStart, setCbStart]         = useState("");
+  const [cbEnd, setCbEnd]             = useState("");
+  const [cbDone, setCbDone]           = useState(false);
+  const [cbCapturing, setCbCapturing] = useState(false);
+  const cbRef = useRef(null);
 
   const totalWater = recipe ? Math.round(coffeeG * (1000 / recipe.ratioGPerL)) : 0;
   const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10 + 1e-9) / 10}` : "--";
@@ -309,6 +346,36 @@ function PourLab() {
     setCalcCoffee("20");
     setCalcWater("300");
     setScreen("ratio-calc");
+  }
+
+  function openColdBrew() {
+    setCbCoffeeG(30);
+    setCbRatio(10);
+    setCbCoffeeName("");
+    setCbGrind("");
+    setCbAdditions("");
+    setCbStart(nowLocalDatetimeStr());
+    setCbEnd("");
+    setCbDone(false);
+    setScreen("coldbrew");
+  }
+
+  function handleDownloadColdBrew() {
+    if (!cbRef.current || !window.html2canvas) return;
+    setCbCapturing(true);
+    window.html2canvas(cbRef.current.parentElement, { scale:2, backgroundColor:null, useCORS:true })
+      .then(canvas => {
+        setCbCapturing(false);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `coldbrew_${new Date().toISOString().slice(0,10)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      })
+      .catch(() => setCbCapturing(false));
   }
 
   function openCupping() {
@@ -602,6 +669,14 @@ function PourLab() {
               )}
             </div>
           ))}
+
+          <div style={s.categoryBlock}>
+            <div style={s.categoryLabel}>COLD BREW</div>
+            <button style={{...s.recipeItemBtn, background:COLDBREW_COLOR}} onClick={openColdBrew}>
+              <span>Cold Brew</span>
+              <span style={s.chevron}>›</span>
+            </button>
+          </div>
 
           <div style={s.categoryBlock}>
             <div style={s.categoryLabel}>{t("HERRAMIENTAS","TOOLS")}</div>
@@ -915,6 +990,172 @@ function PourLab() {
                   <div style={s.cupCommentsText}>{cupComments}</div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (screen === "coldbrew") {
+    const cbWater = Math.round(cbCoffeeG * cbRatio);
+    const cbDuration = formatSteepDuration(cbStart, cbEnd, lang);
+
+    return (
+      <div style={s.page}>
+        <style>{`
+          .pourlab-slim-range { -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:999px; background:#ecdfc9; outline:none; margin:0; }
+          .pourlab-slim-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:10px; height:10px; border-radius:50%; background:var(--thumb-color,#8B5A35); cursor:pointer; border:none; margin-top:-3px; }
+          .pourlab-slim-range::-moz-range-thumb { width:10px; height:10px; border-radius:50%; background:var(--thumb-color,#8B5A35); cursor:pointer; border:none; }
+          .pourlab-slim-range::-webkit-slider-runnable-track { height:4px; border-radius:999px; background:transparent; }
+          .pourlab-slim-range::-moz-range-track { height:4px; border-radius:999px; background:transparent; }
+        `}</style>
+        <div style={s.card}>
+          <div style={s.topBar}>
+            <button style={{...s.backBtn, color:COLDBREW_COLOR}} onClick={()=>setScreen("menu")}>{t("‹ Recetas","‹ Recipes")}</button>
+            <LangToggle />
+          </div>
+          <div style={{...s.eyebrow, color:COLDBREW_COLOR}}>Cold Brew</div>
+
+          {!cbDone && (
+            <div style={s.setup}>
+              <input
+                type="text"
+                placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")}
+                value={cbCoffeeName}
+                onChange={e=>setCbCoffeeName(e.target.value)}
+                style={{...s.input, fontSize:14}}
+              />
+              <input
+                type="text"
+                placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")}
+                value={cbGrind}
+                onChange={e=>setCbGrind(e.target.value)}
+                style={{...s.input, fontSize:14, marginTop:8}}
+              />
+
+              <div style={{...s.customGrid, marginTop:8}}>
+                <div>
+                  <div style={s.smallLabel}>{t("Café (g)","Coffee (g)")}</div>
+                  <input type="number" value={cbCoffeeG} onChange={e=>setCbCoffeeG(parseFloat(e.target.value)||0)} style={s.inputSmall} min="1" />
+                </div>
+                <div>
+                  <div style={s.smallLabel}>{t("Agua (ml)","Water (ml)")}</div>
+                  <input type="number" value={cbWater} readOnly style={{...s.inputSmall, opacity:0.7}} />
+                </div>
+              </div>
+
+              <div style={{marginTop:10}}>
+                <div style={s.smallLabel}>Ratio</div>
+                <div style={{fontSize:22, fontWeight:700, color:COLDBREW_COLOR, lineHeight:1.1, marginBottom:8, textAlign:"center"}}>1:{cbRatio}</div>
+                <input
+                  type="range"
+                  className="pourlab-slim-range"
+                  min="2"
+                  max="20"
+                  step="1"
+                  value={cbRatio}
+                  onChange={e=>setCbRatio(parseInt(e.target.value,10))}
+                  style={{"--thumb-color":COLDBREW_COLOR}}
+                />
+                <div style={s.ratioSliderLabels}><span>1:2</span><span>1:20</span></div>
+              </div>
+
+              <input
+                type="text"
+                placeholder={t("¿Qué más le echas? (ej. clavos, canela...)","What else do you add? (e.g. cloves, cinnamon...)")}
+                value={cbAdditions}
+                onChange={e=>setCbAdditions(e.target.value)}
+                style={{...s.input, fontSize:14, marginTop:14}}
+              />
+
+              <div style={{marginTop:14}}>
+                <div style={s.smallLabel}>{t("Inicio","Start")}</div>
+                <input type="datetime-local" value={cbStart} onChange={e=>setCbStart(e.target.value)} style={{...s.inputSmall, fontSize:13, fontWeight:600, width:"100%"}} />
+              </div>
+              <div style={{marginTop:10}}>
+                <div style={s.smallLabel}>{t("Fin","End")}</div>
+                <input type="datetime-local" value={cbEnd} onChange={e=>setCbEnd(e.target.value)} style={{...s.inputSmall, fontSize:13, fontWeight:600, width:"100%"}} />
+              </div>
+
+              <button style={{...s.startBtn, width:"100%", marginTop:18, background:COLDBREW_COLOR, boxShadow:`0 8px 20px ${hexToRgba(COLDBREW_COLOR,0.35)}`}} onClick={()=>setCbDone(true)}>
+                {t("Crear registro","Create record")}
+              </button>
+            </div>
+          )}
+
+          {cbDone && (
+            <div style={s.summary}>
+              <div style={s.summaryHero}>
+                {cbCoffeeName && <div style={s.summaryName}>{cbCoffeeName}</div>}
+                {cbGrind && <div style={s.summaryGrind}>{cbGrind}</div>}
+                {cbAdditions && <div style={s.summaryGrind}>{cbAdditions}</div>}
+              </div>
+
+              <div style={s.metricsGrid}>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbCoffeeG} g</div>
+                  <div style={s.metricLabel}>{t("Café","Coffee")}</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbWater} ml</div>
+                  <div style={s.metricLabel}>{t("Agua","Water")}</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>1:{cbRatio}</div>
+                  <div style={s.metricLabel}>Ratio</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbDuration}</div>
+                  <div style={s.metricLabel}>{t("Reposo","Steep")}</div>
+                </div>
+              </div>
+
+              <div style={s.divider} />
+
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Inicio","Start")}</span><span style={s.cupFieldValue}>{formatDatetimeDisplay(cbStart, lang)}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Fin","End")}</span><span style={s.cupFieldValue}>{formatDatetimeDisplay(cbEnd, lang)}</span></div>
+            </div>
+          )}
+
+          {cbDone && (
+            <button style={{...s.startBtn, width:"100%", marginTop:14, background:COLDBREW_COLOR, boxShadow:`0 8px 20px ${hexToRgba(COLDBREW_COLOR,0.35)}`, opacity:cbCapturing?0.6:1}} onClick={handleDownloadColdBrew}>
+              {cbCapturing ? t("Generando imagen…","Generating image…") : t("Descargar registro","Download record")}
+            </button>
+          )}
+        </div>
+
+        {cbDone && (
+          <div style={s.hiddenCapture}>
+            <div ref={cbRef} style={s.captureCard}>
+              <div style={{...s.eyebrow, color:COLDBREW_COLOR, marginBottom:10}}>Cold Brew</div>
+              {cbCoffeeName && <div style={{...s.summaryName, textAlign:"center"}}>{cbCoffeeName}</div>}
+              {cbGrind && <div style={{...s.summaryGrind, textAlign:"center"}}>{cbGrind}</div>}
+              {cbAdditions && <div style={{...s.summaryGrind, textAlign:"center"}}>{cbAdditions}</div>}
+
+              <div style={s.metricsGrid}>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbCoffeeG} g</div>
+                  <div style={s.metricLabel}>{t("Café","Coffee")}</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbWater} ml</div>
+                  <div style={s.metricLabel}>{t("Agua","Water")}</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>1:{cbRatio}</div>
+                  <div style={s.metricLabel}>Ratio</div>
+                </div>
+                <div style={s.metricBox}>
+                  <div style={{...s.metricValue, color:COLDBREW_COLOR}}>{cbDuration}</div>
+                  <div style={s.metricLabel}>{t("Reposo","Steep")}</div>
+                </div>
+              </div>
+
+              <div style={s.divider} />
+
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Inicio","Start")}</span><span style={s.cupFieldValue}>{formatDatetimeDisplay(cbStart, lang)}</span></div>
+              <div style={s.cupFieldRow}><span style={s.cupFieldLabel}>{t("Fin","End")}</span><span style={s.cupFieldValue}>{formatDatetimeDisplay(cbEnd, lang)}</span></div>
             </div>
           </div>
         )}
