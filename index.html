@@ -185,20 +185,111 @@ const RECIPES = {
       ];
     },
   },
+  chemex: {
+    id: "chemex",
+    name: { es:"Hoffmann · Chemex", en:"Hoffmann · Chemex" },
+    shortName: { es:"Chemex", en:"Chemex" },
+    color: "#4F2A1B",
+    ratioGPerL: 60,
+    defaultCoffee: 30,
+    phases: (coffeeG, ratioGPerL, lang) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      const bloom = Math.round(coffeeG * 2);
+      const mid   = Math.round(total * 0.6);
+      return lang === "en" ? [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",       targetWater:bloom, note:`Pour ${bloom} g and stir until all the coffee is wet` },
+        { id:"pour1",    start:45,  end:75,   label:"1st pour",    targetWater:mid,   note:`Rise to ${mid} g over 30 s` },
+        { id:"pour2",    start:75,  end:105,  label:"2nd pour",    targetWater:total, note:`Rise to ${total} g over 30 s, more slowly` },
+        { id:"stir",     start:105, end:115,  label:"Stir",        targetWater:total, note:"1x clockwise, 1x counter-clockwise" },
+        { id:"swirl",    start:115, end:125,  label:"Swirl",       targetWater:total, note:"Gently swirl the Chemex" },
+        { id:"drawdown", start:125, end:9999, label:"Drawdown",    targetWater:total, note:"Press Finish once it's done draining" },
+      ] : [
+        { id:"bloom",    start:0,   end:45,   label:"Bloom",       targetWater:bloom, note:`Vierte ${bloom} g y remueve hasta mojar todo el café` },
+        { id:"pour1",    start:45,  end:75,   label:"1er vertido", targetWater:mid,   note:`Sube a ${mid} g en 30 s` },
+        { id:"pour2",    start:75,  end:105,  label:"2do vertido", targetWater:total, note:`Sube a ${total} g en 30 s, más despacio` },
+        { id:"stir",     start:105, end:115,  label:"Remueve",     targetWater:total, note:"1x horario, 1x antihorario" },
+        { id:"swirl",    start:115, end:125,  label:"Swirl",       targetWater:total, note:"Gira suavemente la Chemex" },
+        { id:"drawdown", start:125, end:9999, label:"Drenado",     targetWater:total, note:"Presiona Finalizar cuando termine de drenar" },
+      ];
+    },
+  },
 };
 
 const CATEGORIES = [
   { id:"v60",       label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
   { id:"prensa",    label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
-  { id:"aeropress", label:"AEROPRESS",       en:"AEROPRESS",        recipes:["aeropress"] },
+  { id:"aeropress", label:"AeroPress",       en:"AeroPress",        recipes:["aeropress"] },
   { id:"cloth",     label:"FILTRO DE TELA",  en:"CLOTH FILTER",     recipes:["clothfilter"] },
   { id:"melitta",   label:"MELITTA",         en:"MELITTA",          recipes:["melitta"] },
+  { id:"chemex",    label:"CHEMEX",          en:"CHEMEX",           recipes:["chemex"] },
+  { id:"coldbrew",  label:"Cold Brew", color:"#C68B4E",       en:"Cold Brew",        recipes:["coldbrew"] },
+  { id:"moka", label:"Cafetera italiana", en:"Moka Pot", color:"#7A3E22", recipes:["moka"] },
 ];
 
 const CUSTOM_COLOR = "#8B5A35";
 const TOOL_COLOR = "#623520";
 const CUPPING_COLOR = "#7B4A2D";
 const COLDBREW_COLOR = "#C68B4E";
+const MOKA_COLOR = "#7A3E22";
+
+const MOKA_GUIDE = {
+  es: [
+    { title:"CONSTANTES", items:[
+      "Agua hirviendo en la base",
+      "Cesta de café llena",
+      "Evita la fase de burbujeo enfriando la cámara bajo agua fría",
+      "En cuanto el líquido empiece a fluir, apaga el fuego",
+      "* Opcional: un filtro de AeroPress puede dar una taza más limpia",
+    ]},
+    { title:"MÉTODO", ordered:true, items:[
+      "Hierve agua en la tetera",
+      "Muele el café",
+      "Coloca un filtro de AeroPress en la parte superior (opcional)",
+      "Llena la cesta con café y déjala aparte (puedes alisarlo suavemente, pero sin presionar)",
+      "Sostén la base de la cafetera y llénala con cuidado con agua hirviendo hasta la mitad de la válvula de seguridad",
+      "Coloca la cesta con el café adentro",
+      "Enrosca con cuidado la parte superior, lo más firme que sea razonable",
+      "Pon la cafetera en la estufa a fuego muy bajo",
+      "Levanta la tapa y observa de cerca. Cuando empiece a salir café, baja el fuego. Si burbujea y salpica, retírala del fuego y pásala bajo agua fría",
+      "Cuando ya no salga más café, retírala del fuego",
+      "Cierra la tapa y sirve, revolviendo después de servir",
+    ]},
+    { title:"SI ALGO FALLA", items:[
+      "Si el burbujeo empieza antes de lo esperado (sale poco café): molienda demasiado fina",
+      "Si el burbujeo empieza antes de lo esperado (sale poco café): demasiado fuego",
+    ]},
+  ],
+  en: [
+    { title:"CONSTANTS", items:[
+      "Boiling water in the boiler",
+      "Full basket of coffee",
+      "Avoid the sputtering phase by cooling the chamber under cold water",
+      "As soon as the liquid starts to flow, turn off the heat",
+      "* Optional: an AeroPress filter can give a cleaner cup",
+    ]},
+    { title:"METHOD", ordered:true, items:[
+      "Pre-boil water in the kettle",
+      "Grind the coffee",
+      "Place an AeroPress filter in the top part of the assembly (optional)",
+      "Fill the basket with coffee and set it aside (you can level it gently, but don't press down)",
+      "Hold the base of the Moka pot and carefully fill it with boiling water to roughly halfway up the pressure release valve",
+      "Place the basket with the coffee inside",
+      "Carefully screw on the top as tightly as is reasonable",
+      "Place the Moka pot on the stovetop on very low heat",
+      "Lift the lid and watch the brew closely. When coffee begins to come out, lower the heat. If it sputters and bubbles, remove it from the heat and run it under cold water",
+      "When no more coffee is coming out, remove it from the heat",
+      "Close the lid and serve, stirring after pouring",
+    ]},
+    { title:"TROUBLESHOOTING", items:[
+      "If sputtering starts earlier than expected (not much coffee out): grind too fine",
+      "If sputtering starts earlier than expected (not much coffee out): too much heat",
+    ]},
+  ],
+};
+
+function sentence(str) {
+  return (str === str.toUpperCase() && str.length > 3) ? str.charAt(0) + str.slice(1).toLowerCase() : str;
+}
 
 function fmtTime(s) {
   const m = Math.floor(Math.max(0,s)/60);
@@ -245,6 +336,7 @@ function formatDatetimeDisplay(str, lang) {
 
 function PourLab() {
   const [lang, setLang] = useState("es");
+  const [openCat, setOpenCat] = useState(null);
   const t = (es, en) => (lang === "es" ? es : en);
 
   const [screen, setScreen]         = useState("menu");
@@ -309,6 +401,157 @@ function PourLab() {
   const [cbDone, setCbDone]           = useState(false);
   const [cbCapturing, setCbCapturing] = useState(false);
   const cbRef = useRef(null);
+
+  const [mkName, setMkName]           = useState("");
+  const [mkGrind, setMkGrind]         = useState("");
+  const [mkCoffeeG, setMkCoffeeG]     = useState("");
+  const [mkWaterML, setMkWaterML]     = useState("");
+  const [mkStarted, setMkStarted]     = useState(false);
+  const [mkDone, setMkDone]           = useState(false);
+  const [mkElapsed, setMkElapsed]     = useState(0);
+  const [mkCapturing, setMkCapturing] = useState(false);
+  const mkStartRef = useRef(0);
+  const mkRef = useRef(null);
+
+  useEffect(() => {
+    if (!mkStarted || mkDone) return;
+    const id = setInterval(() => setMkElapsed((Date.now() - mkStartRef.current) / 1000), 250);
+    return () => clearInterval(id);
+  }, [mkStarted, mkDone]);
+
+  // ---- Persistencia: guarda el estado para no perderlo al cambiar de app o recargar ----
+  const STORAGE_KEY = "pourlab-state-v1";
+  const [hydrated, setHydrated] = useState(false);
+  const hydratedRef = useRef(false);
+  const snapshotRef = useRef(null);
+  const lastSavedRef = useRef("");
+
+  snapshotRef.current = {
+    v: 1, savedAt: Date.now(),
+    lang, openCat, screen, recipeId,
+    customRecipe: customRecipeObj ? {
+      name: customRecipeObj.name, shortName: customRecipeObj.shortName, color: customRecipeObj.color,
+      ratioGPerL: customRecipeObj.ratioGPerL, defaultCoffee: customRecipeObj.defaultCoffee,
+      finalPhases: customRecipeObj.phases(),
+    } : null,
+    inputVal, inputMode, coffeeG, coffeeName, grind,
+    running, elapsed, started, isDone, runPhases, totalElapsed, phaseTimestamps,
+    customBrewer, customWaterG, customMode, customPhaseDrafts, selectedTemplate,
+    calcRatio, calcCoffee, calcWater,
+    cupCoffee, cupVariety, cupProcess, cupMethod, cupGrind, cupCoffeeG, cupWaterG, cupScore, cupComments, cupDone,
+    cbCoffeeG, cbRatio, cbCoffeeName, cbGrind, cbAdditions, cbStart, cbEnd, cbDone,
+    mkName, mkGrind, mkCoffeeG, mkWaterML, mkStarted, mkDone, mkElapsed, mkStart: mkStartRef.current,
+  };
+
+  function persistNow() {
+    if (!hydratedRef.current || !snapshotRef.current) return;
+    try {
+      const str = JSON.stringify(snapshotRef.current);
+      if (str !== lastSavedRef.current) {
+        localStorage.setItem(STORAGE_KEY, str);
+        lastSavedRef.current = str;
+      }
+    } catch (e) {}
+  }
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const dt = d && d.savedAt ? Math.max(0, (Date.now() - d.savedAt) / 1000) : 0;
+        if (d && d.v === 1 && dt < 12 * 3600) {
+          const rid = d.recipeId || "ultimate";
+          let scr = d.screen || "menu";
+          if (scr === "app" && ((rid === "custom" && !d.customRecipe) || (rid !== "custom" && !RECIPES[rid]))) scr = "menu";
+
+          setLang(d.lang || "es");
+          setOpenCat(d.openCat ?? null);
+          setRecipeId(rid);
+          if (d.customRecipe) {
+            const cr = d.customRecipe;
+            const fp = cr.finalPhases;
+            setCustomRecipeObj({ id:"custom", name:cr.name, shortName:cr.shortName, color:cr.color, ratioGPerL:cr.ratioGPerL, defaultCoffee:cr.defaultCoffee, phases: () => fp });
+          }
+          setInputVal(d.inputVal ?? "");
+          setInputMode(d.inputMode || "coffee");
+          setCoffeeG(d.coffeeG ?? 30);
+          setCoffeeName(d.coffeeName || "");
+          setGrind(d.grind || "");
+
+          const active = !!d.started && !d.isDone;
+          const totalR = (d.totalElapsed || 0) + (active ? dt : 0);
+          const phaseR = (d.elapsed || 0) + (active && d.running ? dt : 0);
+          offsetRef.current = phaseR; startRef.current = null;
+          totalOffsetRef.current = totalR; totalStartRef.current = null;
+          setElapsed(phaseR);
+          setTotalElapsed(totalR);
+          setRunning(!!d.running && active);
+          setStarted(!!d.started);
+          setIsDone(!!d.isDone);
+          setRunPhases(d.runPhases || []);
+          setPhaseTimestamps(d.phaseTimestamps || {});
+
+          setCustomBrewer(d.customBrewer || "");
+          setCustomWaterG(d.customWaterG ?? 500);
+          setCustomMode(d.customMode || "phases");
+          if (d.customPhaseDrafts && d.customPhaseDrafts.length) setCustomPhaseDrafts(d.customPhaseDrafts);
+          setSelectedTemplate(d.selectedTemplate || "");
+
+          setCalcRatio(d.calcRatio ?? 15);
+          setCalcCoffee(d.calcCoffee ?? "20");
+          setCalcWater(d.calcWater ?? "300");
+
+          setCupCoffee(d.cupCoffee || "");
+          setCupVariety(d.cupVariety || "");
+          setCupProcess(d.cupProcess || "");
+          setCupMethod(d.cupMethod || "");
+          setCupGrind(d.cupGrind || "");
+          setCupCoffeeG(d.cupCoffeeG ?? "15");
+          setCupWaterG(d.cupWaterG ?? "250");
+          setCupScore(d.cupScore ?? 7);
+          setCupComments(d.cupComments || "");
+          setCupDone(!!d.cupDone);
+
+          setCbCoffeeG(d.cbCoffeeG ?? 30);
+          setCbRatio(d.cbRatio ?? 10);
+          setCbCoffeeName(d.cbCoffeeName || "");
+          setCbGrind(d.cbGrind || "");
+          setCbAdditions(d.cbAdditions || "");
+          setCbStart(d.cbStart || "");
+          setCbEnd(d.cbEnd || "");
+          setCbDone(!!d.cbDone);
+
+          setMkName(d.mkName || "");
+          setMkGrind(d.mkGrind || "");
+          setMkCoffeeG(d.mkCoffeeG || "");
+          setMkWaterML(d.mkWaterML || "");
+          const mkActive = !!d.mkStarted && !d.mkDone && d.mkStart;
+          mkStartRef.current = d.mkStart || 0;
+          setMkStarted(!!d.mkStarted);
+          setMkDone(!!d.mkDone);
+          setMkElapsed(mkActive ? (Date.now() - d.mkStart) / 1000 : (d.mkElapsed || 0));
+
+          setScreen(scr);
+        }
+      }
+    } catch (e) {}
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => { hydratedRef.current = hydrated; }, [hydrated]);
+
+  useEffect(() => {
+    const id = setInterval(persistNow, 1000);
+    const onHide = () => { if (document.visibilityState === "hidden") persistNow(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", persistNow);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", persistNow);
+    };
+  }, []);
 
   const totalWater = recipe ? Math.round(coffeeG * (1000 / recipe.ratioGPerL)) : 0;
   const ratioLabel = recipe ? `1:${Math.floor((1000 / recipe.ratioGPerL) * 10 + 1e-9) / 10}` : "--";
@@ -430,6 +673,45 @@ function PourLab() {
         }, "image/png");
       })
       .catch(() => setCbCapturing(false));
+  }
+
+  function openMoka() {
+    setMkName(""); setMkGrind(""); setMkCoffeeG(""); setMkWaterML("");
+    setMkStarted(false); setMkDone(false); setMkElapsed(0);
+    setScreen("moka");
+  }
+
+  function startMoka() {
+    mkStartRef.current = Date.now();
+    setMkElapsed(0);
+    setMkStarted(true);
+  }
+
+  function finishMoka() {
+    setMkElapsed((Date.now() - mkStartRef.current) / 1000);
+    setMkDone(true);
+  }
+
+  function resetMoka() {
+    setMkStarted(false); setMkDone(false); setMkElapsed(0);
+  }
+
+  function handleDownloadMoka() {
+    if (!mkRef.current || !window.html2canvas) return;
+    setMkCapturing(true);
+    window.html2canvas(mkRef.current.parentElement, { scale:2, backgroundColor:null, useCORS:true })
+      .then(canvas => {
+        setMkCapturing(false);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `moka_${new Date().toISOString().slice(0,10)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      })
+      .catch(() => setMkCapturing(false));
   }
 
   function openCupping() {
@@ -697,21 +979,36 @@ function PourLab() {
           <div style={s.appName}>☕ PourLab</div>
 
           <div style={s.categoryBlock}>
-            <div style={s.categoryLabel}>{t("MI PROPIA RECETA","MY OWN RECIPE")}</div>
             <button style={{...s.recipeItemBtn, background:CUSTOM_COLOR}} onClick={openCustomSetup}>
-              <span>{t("Crear receta personalizada","Create custom recipe")}</span>
+              <span>{t("Receta personalizada","Custom recipe")}</span>
               <span style={s.chevron}>›</span>
             </button>
           </div>
 
           {CATEGORIES.map(cat => (
             <div key={cat.id} style={s.categoryBlock}>
-              <div style={s.categoryLabel}>{t(cat.label, cat.en)}</div>
-              {cat.recipes.length > 0 ? (
-                cat.recipes.map(rid => (
+              <div
+                style={{...s.categoryHeader, background:(cat.color || RECIPES[cat.recipes[0]].color), color:"#fffdfa", border:"none", ...(openCat === cat.id ? {marginBottom:8} : {})}}
+                onClick={()=>setOpenCat(openCat === cat.id ? null : cat.id)}
+              >
+                <span>{sentence(t(cat.label, cat.en))}</span>
+                <span style={{...s.catArrow, color:"rgba(255,255,255,0.7)"}}>{openCat === cat.id ? "▾" : "▸"}</span>
+              </div>
+              {openCat === cat.id && (cat.recipes.length > 0 ? (
+                cat.recipes.map(rid => rid === "moka" ? (
+                  <button key={rid} style={{...s.recipeItemBtn, background:MOKA_COLOR, width:"calc(100% - 14px)", marginLeft:14}} onClick={openMoka}>
+                    <span>{t("Hoffmann · Cafetera italiana","Hoffmann · Moka Pot")}</span>
+                    <span style={s.chevron}>›</span>
+                  </button>
+                ) : rid === "coldbrew" ? (
+                  <button key={rid} style={{...s.recipeItemBtn, background:COLDBREW_COLOR, width:"calc(100% - 14px)", marginLeft:14}} onClick={openColdBrew}>
+                    <span>Cold Brew</span>
+                    <span style={s.chevron}>›</span>
+                  </button>
+                ) : (
                   <button
                     key={rid}
-                    style={{...s.recipeItemBtn, background:RECIPES[rid].color}}
+                    style={{...s.recipeItemBtn, background:RECIPES[rid].color, width:"calc(100% - 14px)", marginLeft:14}}
                     onClick={()=>openRecipe(rid)}
                   >
                     <span>{t(RECIPES[rid].name.es, RECIPES[rid].name.en)}</span>
@@ -720,17 +1017,9 @@ function PourLab() {
                 ))
               ) : (
                 <div style={s.comingSoon}>{t("en desarrollo","coming soon")}</div>
-              )}
+              ))}
             </div>
           ))}
-
-          <div style={s.categoryBlock}>
-            <div style={s.categoryLabel}>COLD BREW</div>
-            <button style={{...s.recipeItemBtn, background:COLDBREW_COLOR}} onClick={openColdBrew}>
-              <span>Cold Brew</span>
-              <span style={s.chevron}>›</span>
-            </button>
-          </div>
 
           <div style={s.categoryBlock}>
             <div style={s.categoryLabel}>{t("HERRAMIENTAS","TOOLS")}</div>
@@ -769,7 +1058,7 @@ function PourLab() {
             <button style={{...s.backBtn, color:CUSTOM_COLOR}} onClick={()=>setScreen("menu")}>{t("‹ Recetas","‹ Recipes")}</button>
             <LangToggle />
           </div>
-          <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>{t("MI PROPIA RECETA","MY OWN RECIPE")}</div>
+          <div style={{...s.eyebrow, color:CUSTOM_COLOR}}>{t("RECETA PERSONALIZADA","CUSTOM RECIPE")}</div>
 
           <div style={s.setup}>
             <div style={s.templateLabel}>{t("Adaptar una receta existente (opcional)","Adapt an existing recipe (optional)")}</div>
@@ -1217,6 +1506,124 @@ function PourLab() {
     );
   }
 
+  if (screen === "moka") {
+    const mkC = parseFloat(mkCoffeeG);
+    const mkW = parseFloat(mkWaterML);
+    const mkRatio = (mkC > 0 && mkW > 0) ? `1:${Math.floor((mkW / mkC) * 10 + 1e-9) / 10}` : null;
+    const mkMetrics = [
+      ...(mkC > 0 ? [{ label:t("Café","Coffee"), value:`${mkCoffeeG} g` }] : []),
+      ...(mkW > 0 ? [{ label:t("Agua","Water"), value:`${mkWaterML} ml` }] : []),
+      ...(mkRatio ? [{ label:"Ratio", value:mkRatio }] : []),
+      { label:t("Tiempo","Time"), value:fmtTime(mkElapsed) },
+    ];
+    const mkSummaryBody = (
+      <>
+        {(mkName || mkGrind) && (
+          <div style={s.summaryHero}>
+            {mkName && <div style={s.summaryName}>{mkName}</div>}
+            {mkGrind && <div style={s.summaryGrind}>{mkGrind}</div>}
+          </div>
+        )}
+        <div style={s.metricsGrid}>
+          {mkMetrics.map(m => (
+            <div key={m.label} style={s.metricBox}>
+              <div style={{...s.metricValue, color:MOKA_COLOR}}>{m.value}</div>
+              <div style={s.metricLabel}>{m.label}</div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+    const guide = MOKA_GUIDE[lang];
+
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <div style={s.topBar}>
+            <button style={{...s.backBtn, color:MOKA_COLOR}} onClick={()=>{ resetMoka(); setScreen("menu"); }}>{t("‹ Recetas","‹ Recipes")}</button>
+            <LangToggle />
+          </div>
+          <div style={{...s.eyebrow, color:MOKA_COLOR}}>{t("Hoffmann · Cafetera italiana","Hoffmann · Moka Pot")}</div>
+
+          {!mkStarted && !mkDone && (
+            <div style={s.setup}>
+              <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={mkName} onChange={e=>setMkName(e.target.value)} style={{...s.input, fontSize:14}} />
+              <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={mkGrind} onChange={e=>setMkGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+              <div style={{...s.customGrid, marginTop:8}}>
+                <div>
+                  <div style={s.smallLabel}>{t("Café (g)","Coffee (g)")}</div>
+                  <input type="number" value={mkCoffeeG} onChange={e=>setMkCoffeeG(e.target.value)} style={s.inputSmall} min="0" />
+                </div>
+                <div>
+                  <div style={s.smallLabel}>{t("Agua (ml)","Water (ml)")}</div>
+                  <input type="number" value={mkWaterML} onChange={e=>setMkWaterML(e.target.value)} style={s.inputSmall} min="0" />
+                </div>
+              </div>
+              {mkRatio && <div style={s.inputHint}>ratio {mkRatio}</div>}
+
+              <div style={{marginTop:20}}>
+                {guide.map(sec => (
+                  <div key={sec.title} style={{marginBottom:16}}>
+                    <div style={{...s.fasesTitle, color:MOKA_COLOR, borderBottom:"1px solid #ecdfc9", paddingBottom:6}}>{sec.title}</div>
+                    {sec.items.map((it, i) => (
+                      <div key={i} style={s.mokaItem}>
+                        <span style={{...s.mokaMark, color:MOKA_COLOR}}>{sec.ordered ? `${i+1}.` : "•"}</span>
+                        <span>{it}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <button style={{...s.startBtn, width:"100%", marginTop:6, background:MOKA_COLOR, boxShadow:`0 8px 20px ${hexToRgba(MOKA_COLOR,0.35)}`}} onClick={startMoka}>
+                {t("Iniciar","Start")}
+              </button>
+            </div>
+          )}
+
+          {mkStarted && !mkDone && (
+            <div style={s.setup}>
+              {(mkName || mkGrind) && (
+                <div style={s.subEyebrow}>{[mkName, mkGrind].filter(Boolean).join(" · ")}</div>
+              )}
+              <div style={{textAlign:"center", padding:"20px 0 6px"}}>
+                <div style={{fontSize:76, fontWeight:700, color:MOKA_COLOR, lineHeight:1, fontVariantNumeric:"tabular-nums"}}>{fmtTime(mkElapsed)}</div>
+                <div style={s.timerCaption}>{t("tiempo transcurrido","elapsed time")}</div>
+              </div>
+              <div style={{...s.summaryHero, textAlign:"left", marginTop:18}}>
+                <div style={s.mokaItem}><span style={{...s.mokaMark, color:MOKA_COLOR}}>•</span><span>{t("Cuando empiece a salir café, baja el fuego","When coffee starts to come out, lower the heat")}</span></div>
+                <div style={s.mokaItem}><span style={{...s.mokaMark, color:MOKA_COLOR}}>•</span><span>{t("Si burbujea y salpica, retírala del fuego y pásala bajo agua fría","If it sputters and bubbles, take it off the heat and run it under cold water")}</span></div>
+                <div style={s.mokaItem}><span style={{...s.mokaMark, color:MOKA_COLOR}}>•</span><span>{t("Cuando ya no salga más café, retírala del fuego y pulsa Finalizar","When no more coffee comes out, take it off the heat and press Finish")}</span></div>
+              </div>
+              <div style={s.controls}>
+                <button style={s.resetBtn} onClick={resetMoka}>{t("Reiniciar","Reset")}</button>
+                <button style={{...s.startBtn, background:MOKA_COLOR, boxShadow:`0 8px 20px ${hexToRgba(MOKA_COLOR,0.35)}`}} onClick={finishMoka}>{t("Finalizar","Finish")}</button>
+              </div>
+            </div>
+          )}
+
+          {mkDone && (
+            <div style={s.summary}>
+              {mkSummaryBody}
+              <button style={{...s.startBtn, width:"100%", marginTop:14, background:MOKA_COLOR, boxShadow:`0 8px 20px ${hexToRgba(MOKA_COLOR,0.35)}`, opacity:mkCapturing?0.6:1}} onClick={handleDownloadMoka}>
+                {mkCapturing ? t("Generando imagen…","Generating image…") : t("Descargar resumen","Download summary")}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {mkDone && (
+          <div style={s.hiddenCapture}>
+            <div ref={mkRef} style={s.captureCard}>
+              <div style={{...s.eyebrow, color:MOKA_COLOR, marginBottom:12}}>{t("Hoffmann · Cafetera italiana","Hoffmann · Moka Pot")}</div>
+              {mkSummaryBody}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!recipe) return null;
 
   const phase        = getPhase(runPhases, elapsed);
@@ -1457,6 +1864,12 @@ const s = {
   appName:      { fontSize:22, fontWeight:700, color:"#3d2b1f", textAlign:"center", marginBottom:26, fontFamily:"'Iowan Old Style','Palatino Linotype',Georgia,serif" },
   categoryBlock:{ marginBottom:22 },
   categoryLabel:{ fontSize:11, fontWeight:700, color:"#8a7660", letterSpacing:"0.12em", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:16, borderBottom:"1px solid #ecdfc9", paddingBottom:6 },
+  categoryLabelClickable:{ display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer", userSelect:"none" },
+  catArrow:     { fontSize:11, color:"#8a7660" },
+  mokaItem:     { display:"flex", gap:8, padding:"4px 0", fontSize:12.5, color:"#3d2b1f", lineHeight:1.45, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  mokaMark:     { fontWeight:700, minWidth:18, flexShrink:0 },
+  categoryHeader:{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 14px", borderRadius:10, border:"1px solid #ecdfc9", background:"#fffaf5", color:"#3d2b1f", fontSize:12.5, fontWeight:400, letterSpacing:"0.02em", fontFamily:"'Helvetica Neue',Arial,sans-serif", cursor:"pointer", userSelect:"none" },
+  categoryHeaderOpen:{ background:"#f6ebdc", marginBottom:8 },
   recipeItemBtn:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 14px", border:"none", borderRadius:10, marginBottom:7, color:"#fffdfa", fontWeight:400, fontSize:11.5, letterSpacing:"0.01em", cursor:"pointer", textAlign:"left", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   chevron:      { color:"rgba(255,255,255,0.55)", fontSize:14, fontWeight:400 },
   comingSoon:   { padding:"10px 4px", color:"#c7bba8", fontSize:13, fontStyle:"italic", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
