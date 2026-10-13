@@ -410,6 +410,7 @@ function PourLab() {
   const [mkDone, setMkDone]           = useState(false);
   const [mkElapsed, setMkElapsed]     = useState(0);
   const [mkCapturing, setMkCapturing] = useState(false);
+  const [mkFinishedAt, setMkFinishedAt] = useState(null);
   const mkStartRef = useRef(0);
   const mkRef = useRef(null);
 
@@ -440,7 +441,7 @@ function PourLab() {
     calcRatio, calcCoffee, calcWater,
     cupCoffee, cupVariety, cupProcess, cupMethod, cupGrind, cupCoffeeG, cupWaterG, cupScore, cupComments, cupDone,
     cbCoffeeG, cbRatio, cbCoffeeName, cbGrind, cbAdditions, cbStart, cbEnd, cbDone,
-    mkName, mkGrind, mkCoffeeG, mkWaterML, mkStarted, mkDone, mkElapsed, mkStart: mkStartRef.current,
+    mkName, mkGrind, mkCoffeeG, mkWaterML, mkStarted, mkDone, mkElapsed, mkFinishedAt, mkStart: mkStartRef.current,
   };
 
   function persistNow() {
@@ -530,6 +531,7 @@ function PourLab() {
           mkStartRef.current = d.mkStart || 0;
           setMkStarted(!!d.mkStarted);
           setMkDone(!!d.mkDone);
+          setMkFinishedAt(d.mkFinishedAt || null);
           setMkElapsed(mkActive ? (Date.now() - d.mkStart) / 1000 : (d.mkElapsed || 0));
 
           setScreen(scr);
@@ -689,11 +691,12 @@ function PourLab() {
 
   function finishMoka() {
     setMkElapsed((Date.now() - mkStartRef.current) / 1000);
+    setMkFinishedAt(Date.now());
     setMkDone(true);
   }
 
   function resetMoka() {
-    setMkStarted(false); setMkDone(false); setMkElapsed(0);
+    setMkStarted(false); setMkDone(false); setMkElapsed(0); setMkFinishedAt(null);
   }
 
   function handleDownloadMoka() {
@@ -1516,8 +1519,12 @@ function PourLab() {
       ...(mkRatio ? [{ label:"Ratio", value:mkRatio }] : []),
       { label:t("Tiempo","Time"), value:fmtTime(mkElapsed) },
     ];
+    const mkDate = new Date(mkFinishedAt || Date.now());
+    const mkDateStr = mkDate.toLocaleDateString(lang === "es" ? "es-CO" : "en-US", {day:"2-digit",month:"long",year:"numeric"});
+    const mkTimeStr = mkDate.toLocaleTimeString(lang === "es" ? "es-CO" : "en-US", {hour:"2-digit",minute:"2-digit",hour12:false});
     const mkSummaryBody = (
       <>
+        <div style={s.summaryDate}>{mkDateStr} · {mkTimeStr}</div>
         {(mkName || mkGrind) && (
           <div style={s.summaryHero}>
             {mkName && <div style={s.summaryName}>{mkName}</div>}
