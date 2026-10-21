@@ -215,6 +215,15 @@ const RECIPES = {
   },
 };
 
+// Paleta repartida: cada método con su propio color
+RECIPES.ultimate.color = "#5E2F1F";
+RECIPES.onecup.color = "#5E2F1F";
+RECIPES.frenchpress4min.color = "#C68B4E";
+RECIPES.aeropress.color = "#8B5A35";
+RECIPES.clothfilter.color = "#3B1A0A";
+RECIPES.melitta.color = "#623520";
+RECIPES.chemex.color = "#7B4A2D";
+
 const CATEGORIES = [
   { id:"v60",       label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
   { id:"prensa",    label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
@@ -229,8 +238,8 @@ const CATEGORIES = [
 const CUSTOM_COLOR = "#8B5A35";
 const TOOL_COLOR = "#623520";
 const CUPPING_COLOR = "#7B4A2D";
-const COLDBREW_COLOR = "#C68B4E";
-const MOKA_COLOR = "#7A3E22";
+const COLDBREW_COLOR = "#A36A3D";
+const MOKA_COLOR = "#4A2315";
 
 const MOKA_GUIDE = {
   es: [
@@ -286,6 +295,131 @@ const MOKA_GUIDE = {
     ]},
   ],
 };
+
+function BrewerIcon({ id, color, size = 64 }) {
+  const p = { fill:"none", stroke:color, strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" };
+  let body;
+  if (id === "v60") body = (<>
+    <path d="M12 12h40" {...p}/>
+    <path d="M14 12l10 24h16l10 -24" {...p}/>
+    <path d="M26 36h12" {...p}/>
+    <path d="M24 18l5 14M32 16v17M40 18l-5 14" {...p}/>
+    <path d="M16 40h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M48 43h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
+  </>);
+  else if (id === "chemex") body = (<>
+    <path d="M16 8h32l-13 22h-6z" {...p}/>
+    <path d="M29 34h6l15 22h-36z" {...p}/>
+    <path d="M26 29h12v6h-12z" {...p}/>
+    <path d="M23 46h18" {...p}/>
+  </>);
+  else if (id === "prensa") body = (<>
+    <path d="M18 22h28v30a4 4 0 0 1 -4 4h-20a4 4 0 0 1 -4 -4z" {...p}/>
+    <path d="M16 22h32" {...p}/>
+    <path d="M32 22V8" {...p}/>
+    <path d="M27 8h10" {...p}/>
+    <path d="M46 28h4a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-4" {...p}/>
+    <path d="M20 38h24" {...p}/>
+  </>);
+  else if (id === "aeropress") body = (<>
+    <path d="M26 6h12v18h-12z" {...p}/>
+    <path d="M22 24h20v22h-20z" {...p}/>
+    <path d="M22 31h20" {...p}/>
+    <path d="M24 46h16v4h-16z" {...p}/>
+    <path d="M14 50h36v2a8 8 0 0 1 -8 8h-20a8 8 0 0 1 -8 -8z" {...p}/>
+    <path d="M50 53h3a3 3 0 0 1 0 6h-4" {...p}/>
+  </>);
+  else if (id === "melitta") body = (<>
+    <path d="M10 14h44" {...p}/>
+    <path d="M12 14l8 26h24l8 -26" {...p}/>
+    <path d="M54 14h4a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-4" {...p}/>
+    <path d="M32 40v4" {...p}/>
+    <path d="M16 46h32v4a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+  </>);
+  else if (id === "cloth") body = (<>
+    <path d="M12 12h40" {...p}/>
+    <path d="M14 12q2 24 18 32q16 -8 18 -32" {...p}/>
+    <path d="M32 14v26" {...p} strokeDasharray="2 3"/>
+    <path d="M52 9h10v6h-10z" {...p}/>
+    <path d="M32 47v3" {...p}/>
+    <path d="M18 52h28v2a4 4 0 0 1 -4 4h-20a4 4 0 0 1 -4 -4z" {...p}/>
+  </>);
+  else if (id === "moka") body = (<>
+    <path d="M17 56L13 38h38l-4 18z" {...p}/>
+    <path d="M23 38l3 -8h12l3 8" {...p}/>
+    <path d="M25 30l-3 -18h20l-3 18" {...p}/>
+    <path d="M22 12h20l-2 -5h-16z" {...p}/>
+    <path d="M30 7V4h4v3" {...p}/>
+    <path d="M22 15h-7l4 5" {...p}/>
+    <path d="M44 14h8a4 4 0 0 1 4 4v16a4 4 0 0 1 -4 4h-5" {...p}/>
+  </>);
+  else if (id === "coldbrew") body = (<>
+    <path d="M17 16h30v36a6 6 0 0 1 -6 6h-18a6 6 0 0 1 -6 -6z" {...p}/>
+    <path d="M15 9h34v7h-34z" {...p}/>
+    <path d="M17 24h30" {...p}/>
+    <path d="M40 3L36 36" {...p}/>
+    <rect x="22" y="32" width="9" height="9" rx="2" transform="rotate(-8 26 36)" {...p}/>
+    <rect x="30" y="42" width="9" height="9" rx="2" transform="rotate(10 34 46)" {...p}/>
+  </>);
+  else body = (<>
+    <path d="M14 24h30v14a12 12 0 0 1 -12 12h-6a12 12 0 0 1 -12 -12z" {...p}/>
+    <path d="M44 28h3a5 5 0 0 1 0 10h-3" {...p}/>
+  </>);
+  return <svg width={size} height={size} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
+}
+
+function TabIcon({ id, color, size = 24 }) {
+  const p = { fill:"none", stroke:color, strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round" };
+  let body;
+  if (id === "recipes") body = (<>
+    <path d="M5 10h11v4a5 5 0 0 1 -5 5h-1a5 5 0 0 1 -5 -5z" {...p}/>
+    <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16" {...p}/>
+    <path d="M8.5 3.5v3M12 3.5v3" {...p}/>
+  </>);
+  else if (id === "create") body = (<>
+    <path d="M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3H6a3 3 0 0 1 -3 -3V6a3 3 0 0 1 3 -3z" {...p}/>
+    <path d="M12 8v8M8 12h8" {...p}/>
+  </>);
+  else if (id === "tools") body = (<>
+    <path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1 -1 1H6a1 1 0 0 1 -1 -1V4a1 1 0 0 1 1 -1z" {...p}/>
+    <path d="M8 7h8" {...p}/>
+    <path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01" {...p} strokeWidth="2.4"/>
+  </>);
+  else body = (<>
+    <path d="M6 4h11a2 2 0 0 1 2 2v14H8a2 2 0 0 1 -2 -2z" {...p}/>
+    <path d="M6 18a2 2 0 0 1 2 -2h11" {...p}/>
+    <path d="M10 8h5" {...p}/>
+  </>);
+  return <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
+}
+
+function MiniIcon({ id, color, size = 16 }) {
+  const p = { fill:"none", stroke:color, strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round" };
+  const body = id === "hourglass" ? (
+    <path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V21M16 3v3.5a4 4 0 0 1 -1.6 3.2L12 12l2.4 2.3A4 4 0 0 1 16 17.5V21" {...p}/>
+  ) : (
+    <path d="M12 3.5c3.2 4 5.5 6.8 5.5 10a5.5 5.5 0 0 1 -11 0c0 -3.2 2.3 -6 5.5 -10z" {...p}/>
+  );
+  return <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
+}
+
+const RECIPE_VIDEOS = {
+  ultimate:  "https://www.youtube.com/watch?v=AI4ynXzkSQo",
+  melitta:   "https://www.youtube.com/watch?v=AI4ynXzkSQo",
+  chemex:    "https://www.youtube.com/watch?v=AI4ynXzkSQo",
+  clothfilter: "https://www.youtube.com/watch?v=AI4ynXzkSQo",
+  onecup:    "https://www.youtube.com/watch?v=1oB1oDrDkHM",
+  aeropress: "https://www.youtube.com/watch?v=j6VlT_jUVPc",
+  moka:      "https://youtu.be/BfDLoIvb0w4",
+};
+
+function PlayIcon({ color, size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 5.5v13l10.5 -6.5z" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 function sentence(str) {
   return (str === str.toUpperCase() && str.length > 3) ? str.charAt(0) + str.slice(1).toLowerCase() : str;
@@ -419,6 +553,128 @@ function PourLab() {
     const id = setInterval(() => setMkElapsed((Date.now() - mkStartRef.current) / 1000), 250);
     return () => clearInterval(id);
   }, [mkStarted, mkDone]);
+
+  // ---- Biblioteca: recetas guardadas y diario ----
+  const LIB_KEY = "pourlab-library-v1";
+  const [library, setLibrary] = useState({ recipes: [], diary: [] });
+  const [libReady, setLibReady] = useState(false);
+  const [menuTab, setMenuTab] = useState("recipes");
+  const [menuBrewer, setMenuBrewer] = useState(null);
+  const [diaryOpenId, setDiaryOpenId] = useState(null);
+  const [diaryEdit, setDiaryEdit] = useState(false);
+  const [diaryDraft, setDiaryDraft] = useState({ name:"", grind:"", note:"" });
+  const [diaryConfirm, setDiaryConfirm] = useState(false);
+  const [diaryCapturing, setDiaryCapturing] = useState(false);
+  const diaryRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LIB_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        setLibrary({ recipes: d.recipes || [], diary: d.diary || [] });
+      }
+    } catch (e) {}
+    setLibReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!libReady) return;
+    try { localStorage.setItem(LIB_KEY, JSON.stringify(library)); } catch (e) {}
+  }, [library, libReady]);
+
+  function addDiaryEntry(entry) {
+    // Diario desactivado: ya no se registran entradas.
+  }
+
+  // Extracción terminada
+  useEffect(() => {
+    if (!libReady || !isDone || !recipe) return;
+    const total = Math.round(coffeeG * (1000 / recipe.ratioGPerL));
+    const ratio = `1:${Math.floor((1000 / recipe.ratioGPerL) * 10 + 1e-9) / 10}`;
+    addDiaryEntry({
+      key: `ext|${recipeId}|${coffeeG}|${Math.round(totalElapsed * 10)}|${coffeeName}|${grind}`,
+      ts: Date.now(), type: "extraction", color: recipe.color,
+      title: t(recipe.name.es, recipe.name.en), name: coffeeName, grind, extra: "",
+      metrics: [
+        { label: t("Café","Coffee"), value: `${coffeeG} g` },
+        { label: t("Agua","Water"), value: `${total} ml` },
+        { label: t("Tiempo","Time"), value: fmtTime(totalElapsed) },
+        { label: "Ratio", value: ratio },
+      ],
+      rowsTitle: `${t("FASES","PHASES")} · ${t(recipe.shortName.es, recipe.shortName.en)}`,
+      rows: [
+        ...runPhases.filter(p => p.id !== "drawdown" && p.id !== "free").map(p => ({
+          t: fmtTime(phaseTimestamps[p.id] !== undefined ? phaseTimestamps[p.id] : p.start),
+          label: p.label, detail: `${p.targetWater} g`,
+        })),
+        { t: "fin", label: t("Drenado completo","Brew complete"), detail: fmtTime(totalElapsed) },
+      ],
+      note: "",
+    });
+  }, [isDone, libReady]);
+
+  // Cafetera italiana terminada
+  useEffect(() => {
+    if (!libReady || !mkDone || !mkFinishedAt) return;
+    const c = parseFloat(mkCoffeeG), w = parseFloat(mkWaterML);
+    addDiaryEntry({
+      key: `mk|${mkFinishedAt}`,
+      ts: mkFinishedAt, type: "moka", color: MOKA_COLOR,
+      title: t("Hoffmann · Cafetera italiana","Hoffmann · Moka Pot"), name: mkName, grind: mkGrind, extra: "",
+      metrics: [
+        ...(c > 0 ? [{ label: t("Café","Coffee"), value: `${mkCoffeeG} g` }] : []),
+        ...(w > 0 ? [{ label: t("Agua","Water"), value: `${mkWaterML} ml` }] : []),
+        ...((c > 0 && w > 0) ? [{ label: "Ratio", value: `1:${Math.floor((w / c) * 10 + 1e-9) / 10}` }] : []),
+        { label: t("Tiempo","Time"), value: fmtTime(mkElapsed) },
+      ],
+      rowsTitle: "", rows: [], note: "",
+    });
+  }, [mkDone, libReady]);
+
+  // Ficha de cata creada
+  useEffect(() => {
+    if (!libReady || !cupDone) return;
+    const c = parseFloat(cupCoffeeG), w = parseFloat(cupWaterG);
+    addDiaryEntry({
+      key: `cup|${cupCoffee}|${cupScore}|${cupComments}|${cupCoffeeG}|${cupWaterG}|${cupMethod}`,
+      ts: Date.now(), type: "cupping", color: CUPPING_COLOR,
+      title: t("Ficha de cata","Tasting sheet"), name: cupCoffee, grind: cupGrind,
+      extra: [cupVariety, cupProcess].filter(Boolean).join(" · "),
+      metrics: [
+        { label: t("Puntuación","Score"), value: cupScore.toFixed(1) },
+        ...(c > 0 ? [{ label: t("Café","Coffee"), value: `${cupCoffeeG} g` }] : []),
+        ...(w > 0 ? [{ label: t("Agua","Water"), value: `${cupWaterG} ml` }] : []),
+        ...((c > 0 && w > 0) ? [{ label: "Ratio", value: `1:${Math.floor((w / c) * 10 + 1e-9) / 10}` }] : []),
+      ],
+      rowsTitle: "",
+      rows: cupMethod ? [{ t: "", label: t("Método","Method"), detail: cupMethod }] : [],
+      note: cupComments,
+    });
+  }, [cupDone, libReady]);
+
+  // Cold Brew registrado
+  useEffect(() => {
+    if (!libReady || !cbDone) return;
+    const water = Math.round(cbCoffeeG * cbRatio);
+    addDiaryEntry({
+      key: `cb|${cbStart}|${cbEnd}|${cbCoffeeG}|${cbRatio}|${cbCoffeeName}`,
+      ts: Date.now(), type: "coldbrew", color: COLDBREW_COLOR,
+      title: "Cold Brew", name: cbCoffeeName, grind: cbGrind, extra: cbAdditions,
+      metrics: [
+        { label: t("Café","Coffee"), value: `${cbCoffeeG} g` },
+        { label: t("Agua","Water"), value: `${water} ml` },
+        { label: "Ratio", value: `1:${cbRatio}` },
+        { label: t("Reposo","Steep"), value: formatSteepDuration(cbStart, cbEnd, lang) },
+      ],
+      rowsTitle: "",
+      rows: [
+        { t: "", label: t("Inicio","Start"), detail: formatDatetimeDisplay(cbStart, lang) },
+        { t: "", label: t("Fin","End"), detail: formatDatetimeDisplay(cbEnd, lang) },
+      ],
+      note: "",
+    });
+  }, [cbDone, libReady]);
 
   // ---- Persistencia: guarda el estado para no perderlo al cambiar de app o recargar ----
   const STORAGE_KEY = "pourlab-state-v1";
@@ -589,6 +845,56 @@ function PourLab() {
     setTotalElapsed(0); totalOffsetRef.current = 0; totalStartRef.current = null;
     setPhaseTimestamps({});
     setScreen("app");
+  }
+
+  function loadSavedRecipe(r) {
+    setCustomBrewer(r.brewer || "");
+    setCoffeeName(r.coffeeName || "");
+    setGrind(r.grind || "");
+    setCoffeeG(r.coffeeG);
+    setCustomWaterG(r.waterG);
+    setCustomMode(r.mode || "phases");
+    setSelectedTemplate("");
+    setCustomPhaseDrafts(r.drafts && r.drafts.length ? r.drafts : [{ id:"p0", label:"Bloom", duration:"45", water:"60" }]);
+    setScreen("custom-setup");
+  }
+
+  function deleteSavedRecipe(id) {
+    setLibrary(prev => ({ ...prev, recipes: prev.recipes.filter(r => r.id !== id) }));
+  }
+
+  function startDiaryEdit(e) {
+    setDiaryDraft({ name: e.name || "", grind: e.grind || "", note: e.note || "" });
+    setDiaryEdit(true);
+  }
+
+  function saveDiaryEdit(id) {
+    setLibrary(prev => ({ ...prev, diary: prev.diary.map(e => e.id === id ? { ...e, name: diaryDraft.name, grind: diaryDraft.grind, note: diaryDraft.note } : e) }));
+    setDiaryEdit(false);
+  }
+
+  function deleteDiaryEntry(id) {
+    setLibrary(prev => ({ ...prev, diary: prev.diary.filter(e => e.id !== id) }));
+    setDiaryOpenId(null);
+    setDiaryConfirm(false);
+  }
+
+  function handleDownloadDiary(entry) {
+    if (!diaryRef.current || !window.html2canvas) return;
+    setDiaryCapturing(true);
+    window.html2canvas(diaryRef.current.parentElement, { scale:2, backgroundColor:null, useCORS:true })
+      .then(canvas => {
+        setDiaryCapturing(false);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${(entry.name || entry.title).replace(/[^\w\-]+/g, "_")}_${new Date(entry.ts).toISOString().slice(0,10)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      })
+      .catch(() => setDiaryCapturing(false));
   }
 
   function openCustomSetup() {
@@ -844,6 +1150,12 @@ function PourLab() {
       defaultCoffee:coffee,
       phases: () => finalPhases,
     });
+    setLibrary(prev => {
+      const entry = { id: `${Date.now()}`, brewer: customBrewer.trim(), coffeeName, grind, coffeeG: coffee, waterG: water, mode: customMode, drafts: customMode === "phases" ? customPhaseDrafts : [] };
+      const sig = JSON.stringify([entry.brewer, entry.coffeeName, entry.grind, entry.coffeeG, entry.waterG, entry.mode, entry.drafts]);
+      const rest = prev.recipes.filter(r => JSON.stringify([r.brewer, r.coffeeName, r.grind, r.coffeeG, r.waterG, r.mode, r.drafts]) !== sig);
+      return { ...prev, recipes: [entry, ...rest].slice(0, 50) };
+    });
     setRecipeId("custom");
     setCoffeeG(coffee);
     setRunPhases(finalPhases);
@@ -972,6 +1284,232 @@ function PourLab() {
   );
 
   if (screen === "menu") {
+    const loc = lang === "es" ? "es-CO" : "en-US";
+    const catColor = c => c.id === "coldbrew" ? COLDBREW_COLOR : c.id === "moka" ? MOKA_COLOR : RECIPES[c.recipes[0]].color;
+    const brewerCat = menuBrewer ? CATEGORIES.find(c => c.id === menuBrewer) : null;
+    const curEntry = diaryOpenId ? library.diary.find(e => e.id === diaryOpenId) : null;
+    const entryDateShort = ts => {
+      const d = new Date(ts);
+      return `${d.toLocaleDateString(loc, { day:"2-digit", month:"short", year:"numeric" })} · ${d.toLocaleTimeString(loc, { hour:"2-digit", minute:"2-digit", hour12:false })}`;
+    };
+    const renderEntryBody = e => {
+      const d = new Date(e.ts);
+      return (
+        <>
+          <div style={s.summaryDate}>{d.toLocaleDateString(loc, { day:"2-digit", month:"long", year:"numeric" })} · {d.toLocaleTimeString(loc, { hour:"2-digit", minute:"2-digit", hour12:false })}</div>
+          {(e.name || e.grind || e.extra) && (
+            <div style={s.summaryHero}>
+              {e.name && <div style={s.summaryName}>{e.name}</div>}
+              {e.grind && <div style={s.summaryGrind}>{e.grind}</div>}
+              {e.extra && <div style={s.summaryGrind}>{e.extra}</div>}
+            </div>
+          )}
+          <div style={s.metricsGrid}>
+            {e.metrics.map(m => (
+              <div key={m.label} style={s.metricBox}>
+                <div style={{...s.metricValue, color:e.color}}>{m.value}</div>
+                <div style={s.metricLabel}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+          {e.rows && e.rows.length > 0 && (
+            <>
+              <div style={s.divider} />
+              {e.rowsTitle && <div style={{...s.fasesTitle, color:e.color}}>{e.rowsTitle}</div>}
+              {e.rows.map((r, i) => (
+                <div key={i} style={s.faseRow}>
+                  {r.t !== "" && <span style={{...s.faseT, color:e.color}}>{r.t}</span>}
+                  <span style={s.faseLabel}>{r.label}</span>
+                  <span style={s.faseDetalle}>{r.detail}</span>
+                </div>
+              ))}
+            </>
+          )}
+          {e.note && (
+            <>
+              <div style={s.divider} />
+              <div style={s.cupCommentsText}>{e.note}</div>
+            </>
+          )}
+        </>
+      );
+    };
+    const tabs = [
+      { id:"recipes", label:t("Recetas","Recipes") },
+      { id:"create",  label:t("Crear","Create") },
+      { id:"tools",   label:t("Herramientas","Tools") },
+    ];
+    const goTab = id => { if (id === "create") { openCustomSetup(); return; } setMenuTab(id); setMenuBrewer(null); setDiaryOpenId(null); setDiaryEdit(false); setDiaryConfirm(false); };
+    const onTile = cat => {
+      if (cat.recipes.length === 1) {
+        const rid = cat.recipes[0];
+        if (rid === "moka") openMoka();
+        else if (rid === "coldbrew") openColdBrew();
+        else openRecipe(rid);
+      } else {
+        setMenuBrewer(cat.id);
+      }
+    };
+
+    return (
+      <div style={{...s.page, alignItems:"flex-start", paddingBottom:120}}>
+        <div style={s.card}>
+          <div style={s.topBar}>
+            <div />
+            <LangToggle />
+          </div>
+          <div style={{...s.appName, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}><TabIcon id="recipes" color="#3d2b1f" size={26} /><span>PourLab</span></div>
+
+          {menuTab === "recipes" && !brewerCat && (
+            <div style={s.brewGrid}>
+              {CATEGORIES.map(cat => {
+                const col = catColor(cat);
+                return (
+                  <button key={cat.id} style={{...s.brewTile, background:col, border:"none"}} onClick={()=>onTile(cat)}>
+                    <BrewerIcon id={cat.id} color="#fffdfa" size={64} />
+                    <div style={{...s.brewTileName, color:"#fffdfa"}}>{sentence(t(cat.label, cat.en))}</div>
+                    {cat.recipes.length > 1 && <div style={{...s.brewTileSub, color:"rgba(255,255,255,0.75)"}}>{cat.recipes.length} {t("recetas","recipes")}</div>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {menuTab === "recipes" && brewerCat && (
+            <div>
+              <button style={{...s.backBtn, color:catColor(brewerCat)}} onClick={()=>setMenuBrewer(null)}>{t("‹ Métodos","‹ Brewers")}</button>
+              <div style={{display:"flex", justifyContent:"center", margin:"6px 0 4px"}}><BrewerIcon id={brewerCat.id} color={catColor(brewerCat)} size={56} /></div>
+              <div style={{...s.eyebrow, color:catColor(brewerCat), margin:"0 0 14px", letterSpacing:"0.04em"}}>{sentence(t(brewerCat.label, brewerCat.en))}</div>
+              {brewerCat.recipes.map(rid => (
+                <button key={rid} style={{...s.recipeItemBtn, background:RECIPES[rid].color}} onClick={()=>openRecipe(rid)}>
+                  <span>{t(RECIPES[rid].name.es, RECIPES[rid].name.en)}</span>
+                  <span style={s.chevron}>›</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {menuTab === "create" && (
+            <div>
+              <button style={{...s.recipeItemBtn, background:CUSTOM_COLOR}} onClick={openCustomSetup}>
+                <span>{t("Crear tu receta","Create your recipe")}</span>
+                <span style={s.chevron}>›</span>
+              </button>
+              <div style={{...s.categoryLabel, marginTop:20, marginBottom:12}}>{t("MIS RECETAS","MY RECIPES")}</div>
+              {library.recipes.length === 0 ? (
+                <div style={s.comingSoon}>{t("Aquí aparecerán las recetas que crees","The recipes you create will show up here")}</div>
+              ) : library.recipes.map(r => (
+                <div key={r.id} style={s.savedRow}>
+                  <button style={s.savedMain} onClick={()=>loadSavedRecipe(r)}>
+                    <div style={s.savedTitle}>{r.brewer || t("Personalizada","Custom")}{r.coffeeName ? ` · ${r.coffeeName}` : ""}</div>
+                    <div style={s.savedSub}>{r.coffeeG} g · {r.waterG} ml · 1:{Math.floor((r.waterG / r.coffeeG) * 10 + 1e-9) / 10} · {r.mode === "free" ? t("sin fases","no phases") : `${(r.drafts || []).length} ${t("fases","phases")}`}</div>
+                  </button>
+                  <button style={s.savedDel} onClick={()=>deleteSavedRecipe(r.id)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {menuTab === "tools" && (
+            <div>
+              <button style={{...s.recipeItemBtn, background:TOOL_COLOR}} onClick={openRatioCalc}>
+                <span>{t("Calculadora de ratio","Ratio calculator")}</span>
+                <span style={s.chevron}>›</span>
+              </button>
+              <button style={{...s.recipeItemBtn, background:CUPPING_COLOR}} onClick={openCupping}>
+                <span>{t("Ficha de cata","Tasting sheet")}</span>
+                <span style={s.chevron}>›</span>
+              </button>
+            </div>
+          )}
+
+          {menuTab === "diary" && !curEntry && (
+            <div>
+              {library.diary.length === 0 ? (
+                <div style={s.comingSoon}>{t("Aquí aparecerán tus extracciones, catas y registros","Your brews, tastings and records will show up here")}</div>
+              ) : library.diary.map(e => (
+                <button key={e.id} style={s.diaryItem} onClick={()=>{ setDiaryOpenId(e.id); setDiaryEdit(false); setDiaryConfirm(false); }}>
+                  <span style={{...s.diaryDot, background:e.color}} />
+                  <span style={{flex:1, minWidth:0, textAlign:"left"}}>
+                    <div style={s.diaryTitle}>{e.name || e.title}</div>
+                    <div style={s.diarySub}>{e.name ? `${e.title} · ` : ""}{entryDateShort(e.ts)}</div>
+                    <div style={s.diaryMetrics}>{e.metrics.slice(0,4).map(m => m.value).join(" · ")}</div>
+                  </span>
+                  <span style={s.chevronDark}>›</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {menuTab === "diary" && curEntry && (
+            <div>
+              <button style={{...s.backBtn, color:curEntry.color}} onClick={()=>{ setDiaryOpenId(null); setDiaryEdit(false); setDiaryConfirm(false); }}>{t("‹ Diario","‹ Journal")}</button>
+              <div style={{...s.eyebrow, color:curEntry.color, margin:"8px 0 4px"}}>{curEntry.title}</div>
+
+              {diaryEdit ? (
+                <div style={s.setup}>
+                  <input type="text" placeholder={t("Nombre del café","Coffee name")} value={diaryDraft.name} onChange={ev=>setDiaryDraft({...diaryDraft, name:ev.target.value})} style={{...s.input, fontSize:14}} />
+                  <input type="text" placeholder={t("Molienda","Grind")} value={diaryDraft.grind} onChange={ev=>setDiaryDraft({...diaryDraft, grind:ev.target.value})} style={{...s.input, fontSize:14, marginTop:8}} />
+                  <textarea placeholder={t("Comentarios","Comments")} value={diaryDraft.note} onChange={ev=>setDiaryDraft({...diaryDraft, note:ev.target.value})} style={{...s.textarea, marginTop:8}} rows={4} />
+                  <div style={s.controls}>
+                    <button style={s.resetBtn} onClick={()=>setDiaryEdit(false)}>{t("Cancelar","Cancel")}</button>
+                    <button style={{...s.startBtn, background:curEntry.color}} onClick={()=>saveDiaryEdit(curEntry.id)}>{t("Guardar","Save")}</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={s.summary}>
+                  {renderEntryBody(curEntry)}
+                  <button style={{...s.startBtn, width:"100%", marginTop:14, background:curEntry.color, boxShadow:`0 8px 20px ${hexToRgba(curEntry.color,0.35)}`, opacity:diaryCapturing?0.6:1}} onClick={()=>handleDownloadDiary(curEntry)}>
+                    {diaryCapturing ? t("Generando imagen…","Generating image…") : t("Descargar imagen","Download image")}
+                  </button>
+                  <div style={s.controls}>
+                    {!diaryConfirm ? (
+                      <>
+                        <button style={s.resetBtn} onClick={()=>startDiaryEdit(curEntry)}>{t("Editar","Edit")}</button>
+                        <button style={{...s.resetBtn, color:"#c0392b", borderColor:"#f0cfc9"}} onClick={()=>setDiaryConfirm(true)}>{t("Eliminar","Delete")}</button>
+                      </>
+                    ) : (
+                      <>
+                        <button style={s.resetBtn} onClick={()=>setDiaryConfirm(false)}>{t("Cancelar","Cancel")}</button>
+                        <button style={{...s.startBtn, background:"#c0392b"}} onClick={()=>deleteDiaryEntry(curEntry.id)}>{t("Sí, eliminar","Yes, delete")}</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {menuTab === "diary" && curEntry && (
+          <div style={s.hiddenCapture}>
+            <div ref={diaryRef} style={s.captureCard}>
+              <div style={{...s.eyebrow, color:curEntry.color, marginBottom:12}}>{curEntry.title}</div>
+              {renderEntryBody(curEntry)}
+            </div>
+          </div>
+        )}
+
+        <div style={s.bottomNavOuter}>
+          <div style={s.bottomNavInner}>
+            {tabs.map(tb => {
+              const active = menuTab === tb.id;
+              const col = active ? "#5E2F1F" : "#a89888";
+              return (
+                <button key={tb.id} style={{...s.navBtn, color:col, fontWeight: active ? 700 : 500}} onClick={()=>goTab(tb.id)}>
+                  <TabIcon id={tb.id} color={col} />
+                  <span>{tb.label}</span>
+                  <span style={{...s.navDot, background: active ? "#5E2F1F" : "transparent"}} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "menu-legacy") {
     return (
       <div style={s.page}>
         <div style={s.card}>
@@ -1118,8 +1656,8 @@ function PourLab() {
                 </div>
                 <div style={s.phaseDraftHeader}>
                   <span style={s.phaseDraftInputWide}>{t("Fase","Phase")}</span>
-                  <span style={s.phaseHeaderIconBox}>⏳</span>
-                  <span style={s.phaseHeaderIconBox}>💧</span>
+                  <span style={s.phaseHeaderIconBox}><MiniIcon id="hourglass" color="#8a7660" size={17} /></span>
+                  <span style={s.phaseHeaderIconBox}><MiniIcon id="drop" color="#8a7660" size={17} /></span>
                   <span style={{width:22}} />
                 </div>
                 {customPhaseDrafts.map(d => {
@@ -1224,7 +1762,7 @@ function PourLab() {
             <button style={{...s.backBtn, color:CUPPING_COLOR}} onClick={()=>setScreen("menu")}>{t("‹ Recetas","‹ Recipes")}</button>
             <LangToggle />
           </div>
-          <div style={{...s.eyebrow, color:CUPPING_COLOR}}>{t("☕ FICHA DE CATA","☕ TASTING SHEET")}</div>
+          <div style={{...s.eyebrow, color:CUPPING_COLOR, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}><TabIcon id="recipes" color={CUPPING_COLOR} size={18} /><span>{t("FICHA DE CATA","TASTING SHEET")}</span></div>
 
           {!cupDone && (
             <div style={s.setup}>
@@ -1310,7 +1848,7 @@ function PourLab() {
         {cupDone && (
           <div style={s.hiddenCapture}>
             <div ref={cupRef} style={s.captureCard}>
-              <div style={{...s.eyebrow, color:CUPPING_COLOR, marginBottom:10}}>{t("☕ FICHA DE CATA","☕ TASTING SHEET")}</div>
+              <div style={{...s.eyebrow, color:CUPPING_COLOR, marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}><TabIcon id="recipes" color={CUPPING_COLOR} size={18} /><span>{t("FICHA DE CATA","TASTING SHEET")}</span></div>
               <div style={s.summaryDate}>{cupDateStr}</div>
               {cupCoffee && <div style={{...s.summaryName, marginTop:12, textAlign:"center"}}>{cupCoffee}</div>}
               {(cupVariety || cupProcess) && (
@@ -1554,6 +2092,10 @@ function PourLab() {
 
           {!mkStarted && !mkDone && (
             <div style={s.setup}>
+              <a href={RECIPE_VIDEOS.moka} target="_blank" rel="noopener noreferrer" style={{...s.videoLink, background:MOKA_COLOR}}>
+                <PlayIcon color="#fffdfa" size={14} />
+                <span>{t("Ver receta en video","Watch recipe video")}</span>
+              </a>
               <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={mkName} onChange={e=>setMkName(e.target.value)} style={{...s.input, fontSize:14}} />
               <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={mkGrind} onChange={e=>setMkGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
               <div style={{...s.customGrid, marginTop:8}}>
@@ -1669,6 +2211,12 @@ function PourLab() {
 
         {!started && recipeId !== "custom" && (
           <div style={s.setup}>
+            {RECIPE_VIDEOS[recipeId] && (
+              <a href={RECIPE_VIDEOS[recipeId]} target="_blank" rel="noopener noreferrer" style={{...s.videoLink, background:recipe.color}}>
+                <PlayIcon color="#fffdfa" size={14} />
+                <span>{t("Ver receta en video","Watch recipe video")}</span>
+              </a>
+            )}
             <div style={s.modeRow}>
               <button style={{...s.modeBtn,...(inputMode==="coffee"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("coffee")}>{t("Café (g)","Coffee (g)")}</button>
               <button style={{...s.modeBtn,...(inputMode==="water"?{background:recipe.color,color:"#fffdfa",border:`1px solid ${recipe.color}`}:{})}} onClick={()=>toggleMode("water")}>{t("Agua (ml)","Water (ml)")}</button>
@@ -1733,7 +2281,7 @@ function PourLab() {
         {isDone && (
           <div style={s.summary}>
             <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
-            <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
+            <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}><TabIcon id="recipes" color="#3d2b1f" size={26} /><span>{t("Extracción completada","Extraction complete")}</span></div>
             <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
             {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
@@ -1775,7 +2323,7 @@ function PourLab() {
           <div style={s.hiddenCapture}>
             <div ref={summaryRef} style={s.captureCard}>
               <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
-              <div style={s.summaryTitle}>{t("☕ Extracción completada","☕ Extraction complete")}</div>
+              <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}><TabIcon id="recipes" color="#3d2b1f" size={26} /><span>{t("Extracción completada","Extraction complete")}</span></div>
               <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
               {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
@@ -1873,6 +2421,26 @@ const s = {
   categoryLabel:{ fontSize:11, fontWeight:700, color:"#8a7660", letterSpacing:"0.12em", fontFamily:"'Helvetica Neue',Arial,sans-serif", marginBottom:16, borderBottom:"1px solid #ecdfc9", paddingBottom:6 },
   categoryLabelClickable:{ display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer", userSelect:"none" },
   catArrow:     { fontSize:11, color:"#8a7660" },
+  videoLink:    { display:"flex", alignItems:"center", justifyContent:"center", gap:7, width:"fit-content", margin:"0 auto 14px", padding:"7px 14px", borderRadius:10, border:"none", color:"#fffdfa", fontSize:12, fontWeight:400, letterSpacing:"0.02em", textDecoration:"none", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  brewGrid:     { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 },
+  brewTile:     { display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"16px 8px 12px", borderRadius:18, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  brewTileName: { fontSize:13, color:"#3d2b1f", fontWeight:500 },
+  brewTileSub:  { fontSize:10.5, color:"#8a7660" },
+  bottomNavOuter:{ position:"fixed", left:0, right:0, bottom:0, display:"flex", justifyContent:"center", zIndex:50, pointerEvents:"none" },
+  bottomNavInner:{ pointerEvents:"auto", width:"100%", maxWidth:420, display:"flex", background:"#fffdfa", borderTopLeftRadius:24, borderTopRightRadius:24, boxShadow:"0 -8px 28px rgba(80,50,20,.14)", padding:"10px 6px 14px", borderTop:"1px solid #ecdfc9" },
+  navBtn:       { flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3, border:"none", background:"none", cursor:"pointer", padding:"4px 0", fontFamily:"'Helvetica Neue',Arial,sans-serif", fontSize:10.5, letterSpacing:"0.04em" },
+  navDot:       { width:4, height:4, borderRadius:"50%", marginTop:1 },
+  savedRow:     { display:"flex", alignItems:"center", gap:6, marginBottom:8, background:"#fdf5ec", border:"1px solid #ecdfc9", borderRadius:12 },
+  savedMain:    { flex:1, minWidth:0, textAlign:"left", border:"none", background:"none", padding:"10px 12px", cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  savedTitle:   { fontSize:13, fontWeight:600, color:"#3d2b1f" },
+  savedSub:     { fontSize:11, color:"#8a7660", marginTop:2 },
+  savedDel:     { border:"none", background:"none", color:"#b5651d", fontSize:14, cursor:"pointer", padding:"10px 12px" },
+  diaryItem:    { width:"100%", display:"flex", alignItems:"center", gap:10, padding:"11px 12px", marginBottom:8, background:"#fdf5ec", border:"1px solid #ecdfc9", borderRadius:12, cursor:"pointer", fontFamily:"'Helvetica Neue',Arial,sans-serif" },
+  diaryDot:     { width:8, height:36, borderRadius:4, flexShrink:0 },
+  diaryTitle:   { fontSize:13.5, fontWeight:600, color:"#3d2b1f", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" },
+  diarySub:     { fontSize:11, color:"#8a7660", marginTop:2 },
+  diaryMetrics: { fontSize:11.5, color:"#5a4636", marginTop:3 },
+  chevronDark:  { color:"#c7bba8", fontSize:16 },
   mokaItem:     { display:"flex", gap:8, padding:"4px 0", fontSize:12.5, color:"#3d2b1f", lineHeight:1.45, fontFamily:"'Helvetica Neue',Arial,sans-serif" },
   mokaMark:     { fontWeight:700, minWidth:18, flexShrink:0 },
   categoryHeader:{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 14px", borderRadius:10, border:"1px solid #ecdfc9", background:"#fffaf5", color:"#3d2b1f", fontSize:12.5, fontWeight:400, letterSpacing:"0.02em", fontFamily:"'Helvetica Neue',Arial,sans-serif", cursor:"pointer", userSelect:"none" },
