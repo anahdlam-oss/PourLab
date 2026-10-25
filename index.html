@@ -133,6 +133,42 @@ const RECIPES = {
       ];
     },
   },
+  aeropresssoup: {
+    id: "aeropresssoup",
+    name: { es:"Lance Hedrick · AeroPress Soup (Zuppa lunga)", en:"Lance Hedrick · AeroPress Soup (Zuppa lunga)" },
+    shortName: { es:"AeroPress Soup", en:"AeroPress Soup" },
+    color: "#8B5A35",
+    ratioGPerL: 100,
+    defaultCoffee: 15,
+    prep: {
+      es: [
+        "Coloca un filtro en la tapa y enrosca la tapa en el AeroPress",
+        "Agrega 15 g de café y nivélalo con un toque suave para asentarlo",
+        "Toma un segundo filtro: sirve para dispersar el agua de la tetera, para que no caiga directo sobre el café y no lo agite",
+        "Presiona el segundo filtro con el émbolo para que se pliegue dentro de la cámara. Baja despacio hasta el fondo y compacta (tamp) el café",
+        "Para subir el émbolo, gíralo y tira despacio, sin romper el café compactado",
+        "El filtro sube pegado al émbolo: retíralo y colócalo sobre el café. Empújalo hacia abajo con una cuchara o la paleta del AeroPress",
+      ],
+      en: [
+        "Place a filter in the cap and screw the cap onto the AeroPress",
+        "Add 15 g of coffee and level it with a gentle tap to settle it",
+        "Take a second filter: it disperses the water from the kettle so it doesn't land straight on the coffee and agitate it",
+        "Press the second filter with the plunger so it folds inside the chamber. Go down slowly all the way and tamp the coffee",
+        "To bring the plunger back up, twist and pull slowly, without disrupting the tamped coffee",
+        "The filter comes up stuck to the plunger: take it off and place it on top of the coffee. Push it down with a spoon or the AeroPress paddle",
+      ],
+    },
+    phases: (coffeeG, ratioGPerL, lang) => {
+      const total = Math.round(coffeeG * (1000 / ratioGPerL));
+      return lang === "en" ? [
+        { id:"pour1",    start:0,    end:2000, manual:true, label:"Pour the water", targetWater:total, note:`Pour ${total} g: gently at first, then quickly, trying to keep the top filter still so the water on top stays calm` },
+        { id:"drawdown", start:2000, end:9999, label:"Soup (immersion and press)", targetWater:total, note:"Take the AeroPress off the scale and start pressing" },
+      ] : [
+        { id:"pour1",    start:0,    end:2000, manual:true, label:"Vierte el agua", targetWater:total, note:`Vierte ${total} g: suave al principio y luego rápido, tratando de que el filtro de arriba no se mueva para mantener el agua calmada` },
+        { id:"drawdown", start:2000, end:9999, label:"Sopa (inmersión y prensado)", targetWater:total, note:"Retira el AeroPress de la balanza y empieza a prensar" },
+      ];
+    },
+  },
   clothfilter: {
     id: "clothfilter",
     name: { es:"Hoffmann · Filtro de tela", en:"Hoffmann · Cloth Filter" },
@@ -227,7 +263,7 @@ RECIPES.chemex.color = "#7B4A2D";
 const CATEGORIES = [
   { id:"v60",       label:"V60",             en:"V60",             recipes:["ultimate","onecup"] },
   { id:"prensa",    label:"PRENSA FRANCESA", en:"FRENCH PRESS",     recipes:["frenchpress4min"] },
-  { id:"aeropress", label:"AeroPress",       en:"AeroPress",        recipes:["aeropress"] },
+  { id:"aeropress", label:"AeroPress",       en:"AeroPress",        recipes:["aeropress","aeropresssoup"] },
   { id:"cloth",     label:"FILTRO DE TELA",  en:"CLOTH FILTER",     recipes:["clothfilter"] },
   { id:"melitta",   label:"MELITTA",         en:"MELITTA",          recipes:["melitta"] },
   { id:"chemex",    label:"CHEMEX",          en:"CHEMEX",           recipes:["chemex"] },
@@ -296,16 +332,17 @@ const MOKA_GUIDE = {
   ],
 };
 
-function BrewerIcon({ id, color, size = 64 }) {
-  const p = { fill:"none", stroke:color, strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" };
+function BrewerIcon({ id, color, size = 64, px }) {
+  const dim = px ? size * 1.14 : size;
+  const p = { fill:"none", stroke:color, strokeWidth:(px ? px * 64 / dim : 2), strokeLinecap:"round", strokeLinejoin:"round" };
   let body;
   if (id === "v60") body = (<>
     <path d="M12 12h40" {...p}/>
-    <path d="M14 12l10 24h16l10 -24" {...p}/>
-    <path d="M26 36h12" {...p}/>
-    <path d="M24 18l5 14M32 16v17M40 18l-5 14" {...p}/>
-    <path d="M16 40h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
-    <path d="M48 43h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
+    <path d="M14 12l10 26h16l10 -26" {...p}/>
+    <path d="M26 38h12" {...p}/>
+    <path d="M24 18l5 16M32 16v19M40 18l-5 16" {...p}/>
+    <path d="M16 44h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M48 47h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
   </>);
   else if (id === "chemex") body = (<>
     <path d="M16 8h32l-13 22h-6z" {...p}/>
@@ -322,27 +359,29 @@ function BrewerIcon({ id, color, size = 64 }) {
     <path d="M20 38h24" {...p}/>
   </>);
   else if (id === "aeropress") body = (<>
-    <path d="M26 6h12v18h-12z" {...p}/>
-    <path d="M22 24h20v22h-20z" {...p}/>
-    <path d="M22 31h20" {...p}/>
-    <path d="M24 46h16v4h-16z" {...p}/>
-    <path d="M14 50h36v2a8 8 0 0 1 -8 8h-20a8 8 0 0 1 -8 -8z" {...p}/>
-    <path d="M50 53h3a3 3 0 0 1 0 6h-4" {...p}/>
+    <path d="M26 4h12v14h-12z" {...p}/>
+    <path d="M22 18h20v21h-20z" {...p}/>
+    <path d="M22 25h20" {...p}/>
+    <path d="M24 39h16v5h-16z" {...p}/>
+    <path d="M16 44h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M48 47h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
   </>);
   else if (id === "melitta") body = (<>
-    <path d="M10 14h44" {...p}/>
-    <path d="M12 14l8 26h24l8 -26" {...p}/>
-    <path d="M54 14h4a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-4" {...p}/>
-    <path d="M32 40v4" {...p}/>
-    <path d="M16 46h32v4a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M10 8h44" {...p}/>
+    <path d="M12 8l8 26h24l8 -26" {...p}/>
+    <path d="M54 8h4a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-4" {...p}/>
+    <path d="M32 34v5" {...p}/>
+    <path d="M16 44h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M48 47h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
   </>);
   else if (id === "cloth") body = (<>
-    <path d="M12 12h40" {...p}/>
-    <path d="M14 12q2 24 18 32q16 -8 18 -32" {...p}/>
-    <path d="M32 14v26" {...p} strokeDasharray="2 3"/>
-    <path d="M52 9h10v6h-10z" {...p}/>
-    <path d="M32 47v3" {...p}/>
-    <path d="M18 52h28v2a4 4 0 0 1 -4 4h-20a4 4 0 0 1 -4 -4z" {...p}/>
+    <path d="M12 8h40" {...p}/>
+    <path d="M14 8q2 22 18 30q16 -8 18 -30" {...p}/>
+    <path d="M32 10v24" {...p} strokeDasharray="2 3"/>
+    <path d="M52 5h10v6h-10z" {...p}/>
+    <path d="M32 39v4" {...p}/>
+    <path d="M16 44h32v6a10 10 0 0 1 -10 10h-12a10 10 0 0 1 -10 -10z" {...p}/>
+    <path d="M48 47h2.5a4.5 4.5 0 0 1 0 9h-3" {...p}/>
   </>);
   else if (id === "moka") body = (<>
     <path d="M16 56L21 36h22l5 20z" {...p}/>
@@ -367,11 +406,11 @@ function BrewerIcon({ id, color, size = 64 }) {
     <path d="M14 24h30v14a12 12 0 0 1 -12 12h-6a12 12 0 0 1 -12 -12z" {...p}/>
     <path d="M44 28h3a5 5 0 0 1 0 10h-3" {...p}/>
   </>);
-  return <svg width={size} height={size} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
+  return <svg width={dim} height={dim} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
 }
 
-function TabIcon({ id, color, size = 24 }) {
-  const p = { fill:"none", stroke:color, strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round" };
+function TabIcon({ id, color, size = 24, px }) {
+  const p = { fill:"none", stroke:color, strokeWidth:(px ? px * 24 / size : 1.8), strokeLinecap:"round", strokeLinejoin:"round" };
   let body;
   if (id === "recipes") body = (<>
     <path d="M5 10h11v4a5 5 0 0 1 -5 5h-1a5 5 0 0 1 -5 -5z" {...p}/>
@@ -392,7 +431,7 @@ function TabIcon({ id, color, size = 24 }) {
     <path d="M6 18a2 2 0 0 1 2 -2h11" {...p}/>
     <path d="M10 8h5" {...p}/>
   </>);
-  return <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">{body}</svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={px ? { marginLeft:-6 } : undefined}>{body}</svg>;
 }
 
 function MiniIcon({ id, color, size = 16 }) {
@@ -412,7 +451,14 @@ const RECIPE_VIDEOS = {
   clothfilter: "https://www.youtube.com/watch?v=AI4ynXzkSQo",
   onecup:    "https://www.youtube.com/watch?v=1oB1oDrDkHM",
   aeropress: "https://www.youtube.com/watch?v=j6VlT_jUVPc",
+  aeropresssoup: "https://www.youtube.com/watch?v=1pc1P435Chs",
   moka:      "https://youtu.be/BfDLoIvb0w4",
+};
+
+const METHOD_ICON = {
+  ultimate: "v60", onecup: "v60", frenchpress4min: "prensa",
+  aeropress: "aeropress", aeropresssoup: "aeropress",
+  clothfilter: "cloth", melitta: "melitta", chemex: "chemex",
 };
 
 function PlayIcon({ color, size = 16 }) {
@@ -921,7 +967,7 @@ function PourLab() {
     const drafts = phases.map((p, i) => {
       const inc = Math.max(0, p.targetWater - prevCumulative);
       prevCumulative = p.targetWater;
-      return { id:`tpl${i}`, label:p.label, duration:String(p.end - p.start), water:String(inc) };
+      return { id:`tpl${i}`, label:p.label, duration:p.manual ? "30" : String(p.end - p.start), water:String(inc) };
     });
     const brewerName = id === "frenchpress4min" ? t("Prensa Francesa","French Press") : "V60";
     setCustomBrewer(brewerName);
@@ -1518,7 +1564,7 @@ function PourLab() {
             <div />
             <LangToggle />
           </div>
-          <div style={s.appName}>☕ PourLab</div>
+          <div style={s.appName}>PourLab</div>
 
           <div style={s.categoryBlock}>
             <button style={{...s.recipeItemBtn, background:CUSTOM_COLOR}} onClick={openCustomSetup}>
@@ -1971,6 +2017,7 @@ function PourLab() {
 
           {cbDone && (
             <div style={s.summary}>
+              <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:4, marginBottom:12}}><BrewerIcon id="coldbrew" color="#3d2b1f" size={28} px={1.7} /><TabIcon id="recipes" color="#3d2b1f" size={34} px={1.7} /><span style={{marginLeft:4}}>{t("Registro completado","Record complete")}</span></div>
               <div style={s.summaryHero}>
                 {cbCoffeeName && <div style={s.summaryName}>{cbCoffeeName}</div>}
                 {cbGrind && <div style={s.summaryGrind}>{cbGrind}</div>}
@@ -2014,6 +2061,7 @@ function PourLab() {
           <div style={s.hiddenCapture}>
             <div ref={cbRef} style={s.captureCard}>
               <div style={{...s.eyebrow, color:COLDBREW_COLOR, marginBottom:10}}>Cold Brew</div>
+              <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:4, marginBottom:12}}><BrewerIcon id="coldbrew" color="#3d2b1f" size={28} px={1.7} /><TabIcon id="recipes" color="#3d2b1f" size={34} px={1.7} /><span style={{marginLeft:4}}>{t("Registro completado","Record complete")}</span></div>
               {cbCoffeeName && <div style={{...s.summaryName, textAlign:"center"}}>{cbCoffeeName}</div>}
               {cbGrind && <div style={{...s.summaryGrind, textAlign:"center"}}>{cbGrind}</div>}
               {cbAdditions && <div style={{...s.summaryGrind, textAlign:"center"}}>{cbAdditions}</div>}
@@ -2063,6 +2111,7 @@ function PourLab() {
     const mkTimeStr = mkDate.toLocaleTimeString(lang === "es" ? "es-CO" : "en-US", {hour:"2-digit",minute:"2-digit",hour12:false});
     const mkSummaryBody = (
       <>
+        <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:4}}><BrewerIcon id="moka" color="#3d2b1f" size={28} px={1.7} /><TabIcon id="recipes" color="#3d2b1f" size={34} px={1.7} /><span style={{marginLeft:4}}>{t("Extracción completada","Extraction complete")}</span></div>
         <div style={s.summaryDate}>{mkDateStr} · {mkTimeStr}</div>
         {(mkName || mkGrind) && (
           <div style={s.summaryHero}>
@@ -2226,6 +2275,17 @@ function PourLab() {
             <div style={s.inputHint}>→ {coffeeG} g {t("café","coffee")} · {totalWater} ml {t("agua","water")} · ratio {ratioLabel}</div>
             <input type="text" placeholder={t("Nombre del café (ej. Huila Natural)","Coffee name (e.g. Huila Natural)")} value={coffeeName} onChange={e=>setCoffeeName(e.target.value)} style={{...s.input, fontSize:14, marginTop:10}} />
             <input type="text" placeholder={t("Molienda (ej. K6 · click 40)","Grind (e.g. K6 · click 40)")} value={grind} onChange={e=>setGrind(e.target.value)} style={{...s.input, fontSize:14, marginTop:8}} />
+            {recipe.prep && (
+              <div style={{marginTop:18}}>
+                <div style={{...s.fasesTitle, color:recipe.color, borderBottom:"1px solid #ecdfc9", paddingBottom:6}}>{t("PREPARACIÓN","PREPARATION")}</div>
+                {recipe.prep[lang === "en" ? "en" : "es"].map((it, i) => (
+                  <div key={i} style={s.mokaItem}>
+                    <span style={{...s.mokaMark, color:recipe.color}}>{i+1}.</span>
+                    <span>{it}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -2256,8 +2316,8 @@ function PourLab() {
             </div>
 
             <div style={s.timerBlock}>
-              <div style={{...s.timerNumber, color:recipe.color}}>{isDrawdown ? fmtTime(totalElapsed) : fmtTime(phaseRem)}</div>
-              <div style={s.timerCaption}>{isDrawdown ? t("tiempo total · presiona finalizar cuando termines","total time · press finish when you're done") : t("tiempo restante de esta fase","time left in this phase")}</div>
+              <div style={{...s.timerNumber, color:recipe.color}}>{isDrawdown ? fmtTime(totalElapsed) : phase.manual ? fmtTime(phaseElapsed) : fmtTime(phaseRem)}</div>
+              <div style={s.timerCaption}>{isDrawdown ? t("tiempo total · presiona finalizar cuando termines","total time · press finish when you're done") : phase.manual ? t("tiempo en esta fase · pulsa Siguiente cuando termines","time in this phase · tap Next when you're done") : t("tiempo restante de esta fase","time left in this phase")}</div>
             </div>
 
             <div style={s.phaseRow}>
@@ -2282,7 +2342,7 @@ function PourLab() {
         {isDone && (
           <div style={s.summary}>
             <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
-            <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}><TabIcon id="recipes" color="#3d2b1f" size={26} /><span>{t("Extracción completada","Extraction complete")}</span></div>
+            <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:4}}>{METHOD_ICON[recipeId] && <BrewerIcon id={METHOD_ICON[recipeId]} color="#3d2b1f" size={28} px={1.7} />}<TabIcon id="recipes" color="#3d2b1f" size={34} px={1.7} /><span style={{marginLeft:4}}>{t("Extracción completada","Extraction complete")}</span></div>
             <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
             {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
@@ -2324,7 +2384,7 @@ function PourLab() {
           <div style={s.hiddenCapture}>
             <div ref={summaryRef} style={s.captureCard}>
               <div style={{...s.eyebrow, color:recipe.color, marginBottom:16}}>{recipeName}</div>
-              <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}><TabIcon id="recipes" color="#3d2b1f" size={26} /><span>{t("Extracción completada","Extraction complete")}</span></div>
+              <div style={{...s.summaryTitle, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:4}}>{METHOD_ICON[recipeId] && <BrewerIcon id={METHOD_ICON[recipeId]} color="#3d2b1f" size={28} px={1.7} />}<TabIcon id="recipes" color="#3d2b1f" size={34} px={1.7} /><span style={{marginLeft:4}}>{t("Extracción completada","Extraction complete")}</span></div>
               <div style={s.summaryDate}>{dateStr} · {timeStr}</div>
 
               {(coffeeName || grind || (recipeId==="custom" && customBrewer)) && (
